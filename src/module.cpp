@@ -408,7 +408,7 @@ static std::vector<const rdl2::SceneClass*> getAllSceneClasses(const rdl2::Scene
 // ---------------------------------------------------------------------------
 // Main module definition
 // ---------------------------------------------------------------------------
-PYBIND11_MODULE(scene_rdl2_pybind11, m) {
+PYBIND11_MODULE(scene_rdl2, m) {
     m.doc() = "Python bindings for the scene_rdl2 library";
 
     // -----------------------------------------------------------------------

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple test script to verify scene_rdl2_pybind11 bindings work correctly.
+Simple test script to verify scene_rdl2 bindings work correctly.
 """
 
 import sys
@@ -12,8 +12,8 @@ if os.path.exists(build_dir):
     sys.path.insert(0, build_dir)
 
 try:
-    import scene_rdl2_pybind11 as rdl2
-    print("Successfully imported scene_rdl2_pybind11 module")
+    import scene_rdl2 as rdl2
+    print("Successfully imported scene_rdl2 module")
 
     # Test creating a SceneContext
     context = rdl2.SceneContext()

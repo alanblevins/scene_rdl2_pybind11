@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Run Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python: Run test_bindings.py",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scene_rdl2_pybind11/test_bindings.py",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "C++: Launch (lldb)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/scene_rdl2_pybind11/build/<executable>",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/scene_rdl2_pybind11",
+      "environment": [],
+      "MIMode": "lldb",
+      "externalConsole": false,
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}

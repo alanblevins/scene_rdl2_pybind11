@@ -5,7 +5,7 @@ import pybind11
 
 ext_modules = [
     Pybind11Extension(
-        "scene_rdl2_pybind11",
+        "scene_rdl2",
         [
             "src/module.cpp",
         ],
@@ -20,7 +20,7 @@ ext_modules = [
 ]
 
 setup(
-    name="scene_rdl2_pybind11",
+    name="scene_rdl2",
     version="0.1.0",
     author="DreamWorks Animation",
     author_email="",
