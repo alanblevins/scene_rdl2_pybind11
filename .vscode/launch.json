@@ -1,38 +1,42 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Python: Run Current File",
-      "type": "python",
-      "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Python: Run test_bindings.py",
-      "type": "python",
-      "request": "launch",
-      "program": "${workspaceFolder}/scene_rdl2_pybind11/test_bindings.py",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "C++: Launch (lldb)",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${workspaceFolder}/scene_rdl2_pybind11/build/<executable>",
-      "args": [],
-      "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/scene_rdl2_pybind11",
-      "environment": [],
-      "MIMode": "lldb",
-      "externalConsole": false,
-      "setupCommands": [
+    "version": "0.2.0",
+    "configurations": [
         {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
+            "name": "Python: Run test_bindings.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_bindings.py",
+            "python": "/opt/homebrew/bin/python3.13",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/build/scene_rdl2",
+                "DYLD_LIBRARY_PATH": "/Applications/MoonRay/installs/openmoonray/lib:/Applications/MoonRay/installs/lib"
+            }
+        },
+        {
+            "name": "Python: Run Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "python": "/opt/homebrew/bin/python3.13",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/build/scene_rdl2",
+                "DYLD_LIBRARY_PATH": "/Applications/MoonRay/installs/openmoonray/lib:/Applications/MoonRay/installs/lib"
+            }
+        },
+        {
+            "name": "C++: Debug Extension (lldb)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "/opt/homebrew/bin/python3.13",
+            "args": ["${workspaceFolder}/test_bindings.py"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/build/scene_rdl2",
+                "DYLD_LIBRARY_PATH": "/Applications/MoonRay/installs/openmoonray/lib:/Applications/MoonRay/installs/lib"
+            },
+            "preLaunchTask": "CMake: Build"
         }
-      ]
-    }
-  ]
+    ]
 }

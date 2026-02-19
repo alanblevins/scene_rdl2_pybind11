@@ -3,6 +3,7 @@ project(scene_rdl2)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Use Python 3.13 – pybind11 2.13.6 (MoonRay's bundled version) supports it.
 # Python 3.14 removed private APIs that pybind11 2.13.6 relied on.

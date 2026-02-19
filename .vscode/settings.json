@@ -1,0 +1,19 @@
+{
+    "python.defaultInterpreterPath": "/opt/homebrew/bin/python3.13",
+    "python.terminal.activateEnvironment": false,
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${workspaceFolder}/build/scene_rdl2",
+        "DYLD_LIBRARY_PATH": "/Applications/MoonRay/installs/openmoonray/lib:/Applications/MoonRay/installs/lib"
+    },
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.configureArgs": [
+        "-DPython3_EXECUTABLE=/opt/homebrew/bin/python3.13",
+        "-DPython3_ROOT_DIR=/opt/homebrew/opt/python@3.13",
+        "-DPython3_FIND_STRATEGY=LOCATION"
+    ],
+    "files.associations": {
+        "*.h": "cpp",
+        "*.cpp": "cpp"
+    },
+    "editor.formatOnSave": false
+}
