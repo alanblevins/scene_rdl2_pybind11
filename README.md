@@ -153,4 +153,6 @@ The `SceneContext` destructor calls into MoonRay's DSO-loading infrastructure, w
 
 ## License
 
-Apache 2.0 — see individual source files for copyright notices.
+MIT — see [LICENSE.md](LICENSE.md).
+
+The underlying [DreamWorks MoonRay](https://github.com/dreamworksanimation/openmoonray) libraries (`libscene_rdl2.dylib` and friends) are licensed under Apache 2.0.
