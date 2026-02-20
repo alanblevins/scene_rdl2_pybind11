@@ -1173,7 +1173,9 @@ PYBIND11_MODULE(scene_rdl2, m) {
     // -----------------------------------------------------------------------
     // SceneContext
     // -----------------------------------------------------------------------
-    py::class_<rdl2::SceneContext>(m, "SceneContext")
+    // py::nodelete prevents pybind11 from calling ~SceneContext(), which aborts
+    // outside the full MoonRay pipeline. Memory is reclaimed by the OS on exit.
+    py::class_<rdl2::SceneContext, std::unique_ptr<rdl2::SceneContext, py::nodelete>>(m, "SceneContext")
         .def(py::init<>())
         // DSO path
         .def("getDsoPath", &rdl2::SceneContext::getDsoPath)
