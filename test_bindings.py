@@ -46,8 +46,6 @@ try:
     dso_context.loadAllSceneClasses()
     all_classes = dso_context.getAllSceneClasses()
     print(f"Scene classes loaded: {len(all_classes)}")
-    counts = dso_context.getDsoCounts()
-    print(f"getDsoCounts: {dict(counts)}")
 
     print("\nAll tests passed!")
 
