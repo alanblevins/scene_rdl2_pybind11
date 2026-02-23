@@ -15,5 +15,7 @@
         "*.h": "cpp",
         "*.cpp": "cpp"
     },
-    "editor.formatOnSave": false
+    "editor.formatOnSave": false,
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": []
 }
