@@ -25,6 +25,7 @@
 #include <scene_rdl2/scene/rdl2/GeometrySet.h>
 #include <scene_rdl2/scene/rdl2/Light.h>
 #include <scene_rdl2/scene/rdl2/LightSet.h>
+#include <scene_rdl2/scene/rdl2/LightFilter.h>
 #include <scene_rdl2/scene/rdl2/LightFilterSet.h>
 #include <scene_rdl2/scene/rdl2/ShadowSet.h>
 #include <scene_rdl2/scene/rdl2/ShadowReceiverSet.h>
@@ -68,6 +69,7 @@ MARK_NON_COPYABLE(scene_rdl2::rdl2::Map)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::NormalMap)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::GeometrySet)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::LightSet)
+MARK_NON_COPYABLE(scene_rdl2::rdl2::LightFilter)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::LightFilterSet)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::ShadowSet)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::ShadowReceiverSet)

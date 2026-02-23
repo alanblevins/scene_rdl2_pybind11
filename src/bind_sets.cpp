@@ -15,7 +15,8 @@ void bind_sets(py::module_& m)
         .def("getGeometries", [](const rdl2::GeometrySet& self) {
             const rdl2::SceneObjectIndexable& idx = self.getGeometries();
             return std::vector<rdl2::SceneObject*>(idx.begin(), idx.end());
-        }, "Returns a list of Geometry SceneObjects in this set.")
+        }, py::return_value_policy::reference,
+        "Returns a list of Geometry SceneObjects in this set.")
         .def("add",      &rdl2::GeometrySet::add,      py::arg("geometry"))
         .def("remove",   &rdl2::GeometrySet::remove,   py::arg("geometry"))
         .def("contains", &rdl2::GeometrySet::contains, py::arg("geometry"))
@@ -29,9 +30,42 @@ void bind_sets(py::module_& m)
     py::class_<rdl2::LightSet, rdl2::SceneObject>(m, "LightSet")
         .def("getLights", [](const rdl2::LightSet& self) {
             return self.getLights();
-        }, "Returns a list of Light SceneObjects in this set.")
+        }, py::return_value_policy::reference,
+        "Returns a list of Light SceneObjects in this set.")
         .def("add",      &rdl2::LightSet::add,      py::arg("light"))
         .def("remove",   &rdl2::LightSet::remove,   py::arg("light"))
         .def("contains", &rdl2::LightSet::contains, py::arg("light"))
         .def("clear",    &rdl2::LightSet::clear);
+
+    // -----------------------------------------------------------------------
+    // LightFilter (inherits SceneObject)
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::LightFilter, rdl2::SceneObject>(m, "LightFilter")
+        .def("isOn", &rdl2::LightFilter::isOn);
+
+    // -----------------------------------------------------------------------
+    // LightFilterSet (inherits SceneObject)
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::LightFilterSet, rdl2::SceneObject>(m, "LightFilterSet")
+        .def("getLightFilters", [](const rdl2::LightFilterSet& self) {
+            const rdl2::SceneObjectVector& v = self.getLightFilters();
+            return std::vector<rdl2::SceneObject*>(v.begin(), v.end());
+        }, py::return_value_policy::reference,
+        "Returns a list of LightFilter SceneObjects in this set.")
+        .def("add",      &rdl2::LightFilterSet::add,      py::arg("light_filter"))
+        .def("remove",   &rdl2::LightFilterSet::remove,   py::arg("light_filter"))
+        .def("contains", &rdl2::LightFilterSet::contains, py::arg("light_filter"))
+        .def("clear",    &rdl2::LightFilterSet::clear);
+
+    // -----------------------------------------------------------------------
+    // ShadowSet (inherits LightSet)
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::ShadowSet, rdl2::LightSet>(m, "ShadowSet")
+        .def("haveLightsChanged", &rdl2::ShadowSet::haveLightsChanged);
+
+    // -----------------------------------------------------------------------
+    // ShadowReceiverSet (inherits GeometrySet)
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::ShadowReceiverSet, rdl2::GeometrySet>(m, "ShadowReceiverSet")
+        .def("haveGeometriesChanged", &rdl2::ShadowReceiverSet::haveGeometriesChanged);
 }

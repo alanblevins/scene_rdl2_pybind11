@@ -51,6 +51,7 @@ void bind_scene_context(py::module_& m)
         .def("createSceneClass",  &rdl2::SceneContext::createSceneClass,
              py::return_value_policy::reference)
         .def("getAllSceneClasses", &getAllSceneClasses,
+             py::return_value_policy::reference,
              "Returns a list of all SceneClass objects in the context.")
         // Scene objects
         .def("getSceneObject",
@@ -65,12 +66,15 @@ void bind_scene_context(py::module_& m)
         .def("createSceneObject", &rdl2::SceneContext::createSceneObject,
              py::return_value_policy::reference)
         .def("getAllSceneObjects", &getAllSceneObjects,
+             py::return_value_policy::reference,
              "Returns a list of all SceneObject instances in the context.")
         // Cameras
         .def("getPrimaryCamera", &rdl2::SceneContext::getPrimaryCamera,
              py::return_value_policy::reference)
-        .def("getCameras",       &rdl2::SceneContext::getCameras)
-        .def("getActiveCameras", &rdl2::SceneContext::getActiveCameras)
+        .def("getCameras",       &rdl2::SceneContext::getCameras,
+             py::return_value_policy::reference)
+        .def("getActiveCameras", &rdl2::SceneContext::getActiveCameras,
+             py::return_value_policy::reference)
         .def("getDicingCamera",  &rdl2::SceneContext::getDicingCamera,
              py::return_value_policy::reference)
         // Transforms

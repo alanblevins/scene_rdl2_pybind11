@@ -247,9 +247,13 @@ void bind_scene_object(py::module_& m)
         .def("isLayer",        [](const rdl2::SceneObject& s){ return s.isA<rdl2::Layer>(); })
         .def("isGeometrySet",  [](const rdl2::SceneObject& s){ return s.isA<rdl2::GeometrySet>(); })
         .def("isLightSet",     [](const rdl2::SceneObject& s){ return s.isA<rdl2::LightSet>(); })
-        .def("isNode",         [](const rdl2::SceneObject& s){ return s.isA<rdl2::Node>(); })
-        .def("isRenderOutput", [](const rdl2::SceneObject& s){ return s.isA<rdl2::RenderOutput>(); })
-        .def("isUserData",     [](const rdl2::SceneObject& s){ return s.isA<rdl2::UserData>(); })
+        .def("isNode",              [](const rdl2::SceneObject& s){ return s.isA<rdl2::Node>(); })
+        .def("isRenderOutput",      [](const rdl2::SceneObject& s){ return s.isA<rdl2::RenderOutput>(); })
+        .def("isUserData",          [](const rdl2::SceneObject& s){ return s.isA<rdl2::UserData>(); })
+        .def("isLightFilter",       [](const rdl2::SceneObject& s){ return s.isA<rdl2::LightFilter>(); })
+        .def("isLightFilterSet",    [](const rdl2::SceneObject& s){ return s.isA<rdl2::LightFilterSet>(); })
+        .def("isShadowSet",         [](const rdl2::SceneObject& s){ return s.isA<rdl2::ShadowSet>(); })
+        .def("isShadowReceiverSet", [](const rdl2::SceneObject& s){ return s.isA<rdl2::ShadowReceiverSet>(); })
         // Safe downcasts
         .def("asCamera", [](rdl2::SceneObject* s) -> rdl2::Camera* {
             return s->asA<rdl2::Camera>();
@@ -277,6 +281,18 @@ void bind_scene_object(py::module_& m)
         }, py::return_value_policy::reference)
         .def("asRenderOutput", [](rdl2::SceneObject* s) -> rdl2::RenderOutput* {
             return s->asA<rdl2::RenderOutput>();
+        }, py::return_value_policy::reference)
+        .def("asLightFilter", [](rdl2::SceneObject* s) -> rdl2::LightFilter* {
+            return s->asA<rdl2::LightFilter>();
+        }, py::return_value_policy::reference)
+        .def("asLightFilterSet", [](rdl2::SceneObject* s) -> rdl2::LightFilterSet* {
+            return s->asA<rdl2::LightFilterSet>();
+        }, py::return_value_policy::reference)
+        .def("asShadowSet", [](rdl2::SceneObject* s) -> rdl2::ShadowSet* {
+            return s->asA<rdl2::ShadowSet>();
+        }, py::return_value_policy::reference)
+        .def("asShadowReceiverSet", [](rdl2::SceneObject* s) -> rdl2::ShadowReceiverSet* {
+            return s->asA<rdl2::ShadowReceiverSet>();
         }, py::return_value_policy::reference)
         // Dynamic attribute access
         .def("get", [](const rdl2::SceneObject& self, const std::string& name) {

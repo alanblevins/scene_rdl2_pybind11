@@ -44,13 +44,19 @@ void bind_layer(py::module_& m)
                                        const rdl2::LayerAssignment&))
              &rdl2::Layer::assign,
              py::arg("geometry"), py::arg("part_name"), py::arg("assignment"))
-        .def("lookupMaterial",    &rdl2::Layer::lookupMaterial,
+        .def("lookupMaterial",         &rdl2::Layer::lookupMaterial,
              py::arg("assignment_id"), py::return_value_policy::reference)
-        .def("lookupLightSet",    &rdl2::Layer::lookupLightSet,
+        .def("lookupLightSet",         &rdl2::Layer::lookupLightSet,
              py::arg("assignment_id"), py::return_value_policy::reference)
-        .def("lookupDisplacement",&rdl2::Layer::lookupDisplacement,
+        .def("lookupDisplacement",     &rdl2::Layer::lookupDisplacement,
              py::arg("assignment_id"), py::return_value_policy::reference)
-        .def("lookupVolumeShader",&rdl2::Layer::lookupVolumeShader,
+        .def("lookupVolumeShader",     &rdl2::Layer::lookupVolumeShader,
+             py::arg("assignment_id"), py::return_value_policy::reference)
+        .def("lookupLightFilterSet",   &rdl2::Layer::lookupLightFilterSet,
+             py::arg("assignment_id"), py::return_value_policy::reference)
+        .def("lookupShadowSet",        &rdl2::Layer::lookupShadowSet,
+             py::arg("assignment_id"), py::return_value_policy::reference)
+        .def("lookupShadowReceiverSet",&rdl2::Layer::lookupShadowReceiverSet,
              py::arg("assignment_id"), py::return_value_policy::reference)
         .def("clear",            &rdl2::Layer::clear)
         .def("lightSetsChanged", &rdl2::Layer::lightSetsChanged);

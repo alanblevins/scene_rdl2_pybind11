@@ -79,6 +79,7 @@ void bind_attribute(py::module_& m)
              py::return_value_policy::reference)
         .def("getGroupNames",  &getGroupNames)
         .def("getAttributes",  &getAttributeList,
+             py::return_value_policy::reference,
              "Returns a list of all Attribute objects in this SceneClass.")
         .def("getSourcePath",  &rdl2::SceneClass::getSourcePath)
         .def("showAllAttributes", &rdl2::SceneClass::showAllAttributes)
