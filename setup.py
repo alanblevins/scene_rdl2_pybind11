@@ -38,9 +38,9 @@ ext_modules = [
 setup(
     name="scene_rdl2",
     version="0.1.0",
-    author="DreamWorks Animation",
-    author_email="",
-    description="Python bindings for scene_rdl2 library",
+    author="Alan Blevins",
+    author_email="alan.blevins@gmail.com",
+    description="pybind11 bindings for scene_rdl2 library",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     ext_modules=ext_modules,
