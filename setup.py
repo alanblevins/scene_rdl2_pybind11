@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Alan Blevins
+# SPDX-License-Identifier: MIT
+
 from setuptools import setup, Extension
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 from pybind11 import get_cmake_dir

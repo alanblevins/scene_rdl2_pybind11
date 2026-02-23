@@ -1,5 +1,5 @@
-// Copyright 2023-2024 DreamWorks Animation LLC
-// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2026 Alan Blevins
+// SPDX-License-Identifier: MIT
 //
 // Comprehensive Python bindings for the scene_rdl2 library using pybind11.
 

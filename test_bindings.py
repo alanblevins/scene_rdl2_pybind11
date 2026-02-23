@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alan Blevins
+# SPDX-License-Identifier: MIT
 """
 Simple test script to verify scene_rdl2 bindings work correctly.
 """
@@ -21,6 +23,7 @@ try:
     context = rdl2.SceneContext()
     context.setProxyModeEnabled(True)
     context.setDsoPath(DSO_PATH)
+    context.loadAllSceneClasses()
     print("Created SceneContext successfully")
 
     # Test creating a scene class

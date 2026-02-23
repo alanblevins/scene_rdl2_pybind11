@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Alan Blevins
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <pybind11/pybind11.h>
