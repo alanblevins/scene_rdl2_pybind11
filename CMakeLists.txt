@@ -27,7 +27,22 @@ include_directories(
 
 # Build as a Python extension module (.so / .dylib).
 # We replicate what pybind11_add_module() does, minus the homebrew dependency.
-add_library(scene_rdl2 MODULE src/module.cpp)
+add_library(scene_rdl2 MODULE
+    src/module.cpp
+    src/bind_math.cpp
+    src/bind_types.cpp
+    src/bind_attribute.cpp
+    src/bind_scene_object.cpp
+    src/bind_scene_variables.cpp
+    src/bind_node.cpp
+    src/bind_light.cpp
+    src/bind_shaders.cpp
+    src/bind_sets.cpp
+    src/bind_layer.cpp
+    src/bind_render_output.cpp
+    src/bind_scene_context.cpp
+    src/bind_io.cpp
+)
 
 # Python headers
 target_include_directories(scene_rdl2 PRIVATE ${Python3_INCLUDE_DIRS})
@@ -36,7 +51,7 @@ target_include_directories(scene_rdl2 PRIVATE ${Python3_INCLUDE_DIRS})
 set_target_properties(scene_rdl2 PROPERTIES
     PREFIX ""
     SUFFIX ".${Python3_SOABI}.so"
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/scene_rdl2
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     BUILD_RPATH "${MOONRAY_LIB};/Applications/MoonRay/installs/lib"
     INSTALL_RPATH "${MOONRAY_LIB};/Applications/MoonRay/installs/lib"
 )

@@ -11,6 +11,19 @@ ext_modules = [
         "scene_rdl2",
         [
             "src/module.cpp",
+            "src/bind_math.cpp",
+            "src/bind_types.cpp",
+            "src/bind_attribute.cpp",
+            "src/bind_scene_object.cpp",
+            "src/bind_scene_variables.cpp",
+            "src/bind_node.cpp",
+            "src/bind_light.cpp",
+            "src/bind_shaders.cpp",
+            "src/bind_sets.cpp",
+            "src/bind_layer.cpp",
+            "src/bind_render_output.cpp",
+            "src/bind_scene_context.cpp",
+            "src/bind_io.cpp",
         ],
         include_dirs=[
             # Path to pybind11 headers
