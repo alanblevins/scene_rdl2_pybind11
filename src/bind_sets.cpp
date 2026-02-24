@@ -130,4 +130,139 @@ void bind_sets(py::module_& m)
             return ids;
         }, py::arg("geometry"),
         "Return a list of all assignment IDs for the given Geometry.");
+
+    // -----------------------------------------------------------------------
+    // UserData (inherits SceneObject)
+    // Typed key/value channels for passing primitive attributes through rdl2.
+    // Bool, Int, String: single-timestep only.
+    // Float, Color, Vec2f, Vec3f, Mat4f: support dual-timestep (blur).
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::UserData, rdl2::SceneObject> ud(m, "UserData");
+
+    py::enum_<rdl2::UserData::Rate>(ud, "Rate")
+        .value("AUTO",         rdl2::UserData::AUTO)
+        .value("CONSTANT",     rdl2::UserData::CONSTANT)
+        .value("PART",         rdl2::UserData::PART)
+        .value("UNIFORM",      rdl2::UserData::UNIFORM)
+        .value("VERTEX",       rdl2::UserData::VERTEX)
+        .value("VARYING",      rdl2::UserData::VARYING)
+        .value("FACE_VARYING", rdl2::UserData::FACE_VARYING)
+        .export_values();
+
+    ud
+        .def("setRate", [](rdl2::UserData& self, rdl2::UserData::Rate rate) {
+            self.setRate(static_cast<int>(rate));
+        }, py::arg("rate"))
+        .def("getRate", [](const rdl2::UserData& self) {
+            return static_cast<rdl2::UserData::Rate>(self.getRate());
+        })
+        // Bool (single timestep)
+        .def("hasBoolData",  &rdl2::UserData::hasBoolData)
+        .def("setBoolData", [](rdl2::UserData& self, const std::string& key,
+                               const rdl2::BoolVector& values) {
+            self.setBoolData(key, values);
+        }, py::arg("key"), py::arg("values"))
+        .def("getBoolKey",    &rdl2::UserData::getBoolKey)
+        .def("getBoolValues", &rdl2::UserData::getBoolValues)
+        // Int (single timestep)
+        .def("hasIntData",  &rdl2::UserData::hasIntData)
+        .def("setIntData", [](rdl2::UserData& self, const std::string& key,
+                              const rdl2::IntVector& values) {
+            self.setIntData(key, values);
+        }, py::arg("key"), py::arg("values"))
+        .def("getIntKey",    &rdl2::UserData::getIntKey)
+        .def("getIntValues", &rdl2::UserData::getIntValues)
+        // Float (dual timestep)
+        .def("hasFloatData",  &rdl2::UserData::hasFloatData)
+        .def("hasFloatData0", &rdl2::UserData::hasFloatData0)
+        .def("hasFloatData1", &rdl2::UserData::hasFloatData1)
+        .def("setFloatData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::FloatVector& values) {
+            self.setFloatData(key, values);
+        }, py::arg("key"), py::arg("values"))
+        .def("setFloatData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::FloatVector& values0,
+                                const rdl2::FloatVector& values1) {
+            self.setFloatData(key, values0, values1);
+        }, py::arg("key"), py::arg("values0"), py::arg("values1"))
+        .def("getFloatKey",    &rdl2::UserData::getFloatKey)
+        .def("getFloatValues", &rdl2::UserData::getFloatValues)
+        .def("getFloatValues0",&rdl2::UserData::getFloatValues0)
+        .def("getFloatValues1",&rdl2::UserData::getFloatValues1)
+        // String (single timestep)
+        .def("hasStringData",  &rdl2::UserData::hasStringData)
+        .def("setStringData", [](rdl2::UserData& self, const std::string& key,
+                                 const rdl2::StringVector& values) {
+            self.setStringData(key, values);
+        }, py::arg("key"), py::arg("values"))
+        .def("getStringKey",    &rdl2::UserData::getStringKey)
+        .def("getStringValues", &rdl2::UserData::getStringValues)
+        // Color / Rgb (dual timestep)
+        .def("hasColorData",  &rdl2::UserData::hasColorData)
+        .def("hasColorData0", &rdl2::UserData::hasColorData0)
+        .def("hasColorData1", &rdl2::UserData::hasColorData1)
+        .def("setColorData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::RgbVector& values) {
+            self.setColorData(key, values);
+        }, py::arg("key"), py::arg("values"))
+        .def("setColorData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::RgbVector& values0,
+                                const rdl2::RgbVector& values1) {
+            self.setColorData(key, values0, values1);
+        }, py::arg("key"), py::arg("values0"), py::arg("values1"))
+        .def("getColorKey",    &rdl2::UserData::getColorKey)
+        .def("getColorValues", &rdl2::UserData::getColorValues)
+        .def("getColorValues0",&rdl2::UserData::getColorValues0)
+        .def("getColorValues1",&rdl2::UserData::getColorValues1)
+        // Vec2f (dual timestep)
+        .def("hasVec2fData",  &rdl2::UserData::hasVec2fData)
+        .def("hasVec2fData0", &rdl2::UserData::hasVec2fData0)
+        .def("hasVec2fData1", &rdl2::UserData::hasVec2fData1)
+        .def("setVec2fData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::Vec2fVector& values) {
+            self.setVec2fData(key, values);
+        }, py::arg("key"), py::arg("values"))
+        .def("setVec2fData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::Vec2fVector& values0,
+                                const rdl2::Vec2fVector& values1) {
+            self.setVec2fData(key, values0, values1);
+        }, py::arg("key"), py::arg("values0"), py::arg("values1"))
+        .def("getVec2fKey",    &rdl2::UserData::getVec2fKey)
+        .def("getVec2fValues", &rdl2::UserData::getVec2fValues)
+        .def("getVec2fValues0",&rdl2::UserData::getVec2fValues0)
+        .def("getVec2fValues1",&rdl2::UserData::getVec2fValues1)
+        // Vec3f (dual timestep)
+        .def("hasVec3fData",  &rdl2::UserData::hasVec3fData)
+        .def("hasVec3fData0", &rdl2::UserData::hasVec3fData0)
+        .def("hasVec3fData1", &rdl2::UserData::hasVec3fData1)
+        .def("setVec3fData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::Vec3fVector& values) {
+            self.setVec3fData(key, values);
+        }, py::arg("key"), py::arg("values"))
+        .def("setVec3fData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::Vec3fVector& values0,
+                                const rdl2::Vec3fVector& values1) {
+            self.setVec3fData(key, values0, values1);
+        }, py::arg("key"), py::arg("values0"), py::arg("values1"))
+        .def("getVec3fKey",    &rdl2::UserData::getVec3fKey)
+        .def("getVec3fValues", &rdl2::UserData::getVec3fValues)
+        .def("getVec3fValues0",&rdl2::UserData::getVec3fValues0)
+        .def("getVec3fValues1",&rdl2::UserData::getVec3fValues1)
+        // Mat4f (dual timestep)
+        .def("hasMat4fData",  &rdl2::UserData::hasMat4fData)
+        .def("hasMat4fData0", &rdl2::UserData::hasMat4fData0)
+        .def("hasMat4fData1", &rdl2::UserData::hasMat4fData1)
+        .def("setMat4fData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::Mat4fVector& values) {
+            self.setMat4fData(key, values);
+        }, py::arg("key"), py::arg("values"))
+        .def("setMat4fData", [](rdl2::UserData& self, const std::string& key,
+                                const rdl2::Mat4fVector& values0,
+                                const rdl2::Mat4fVector& values1) {
+            self.setMat4fData(key, values0, values1);
+        }, py::arg("key"), py::arg("values0"), py::arg("values1"))
+        .def("getMat4fKey",    &rdl2::UserData::getMat4fKey)
+        .def("getMat4fValues", &rdl2::UserData::getMat4fValues)
+        .def("getMat4fValues0",&rdl2::UserData::getMat4fValues0)
+        .def("getMat4fValues1",&rdl2::UserData::getMat4fValues1);
 }

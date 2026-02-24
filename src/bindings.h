@@ -87,6 +87,7 @@ MARK_NON_COPYABLE(scene_rdl2::rdl2::EnvMap)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::Joint)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::Metadata)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::TraceSet)
+MARK_NON_COPYABLE(scene_rdl2::rdl2::UserData)
 #undef MARK_NON_COPYABLE
 }} // namespace pybind11::detail
 

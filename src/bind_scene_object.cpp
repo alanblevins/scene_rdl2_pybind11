@@ -314,6 +314,9 @@ void bind_scene_object(py::module_& m)
         .def("asTraceSet", [](rdl2::SceneObject* s) -> rdl2::TraceSet* {
             return s->asA<rdl2::TraceSet>();
         }, py::return_value_policy::reference)
+        .def("asUserData", [](rdl2::SceneObject* s) -> rdl2::UserData* {
+            return s->asA<rdl2::UserData>();
+        }, py::return_value_policy::reference)
         // Dictionary-style attribute access
         // obj["attr"]                         -> get at TIMESTEP_BEGIN
         // obj["attr", rdl2.TIMESTEP_END]      -> get at specific timestep
