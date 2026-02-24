@@ -541,9 +541,9 @@ class TestMathImplicitConversion(_WithDsos):
 
     def test_rgb_from_list_at_cpp_boundary(self):
         self.sv.beginUpdate()
-        self.sv.set("fatal_color", [1.0, 0.0, 0.5])
+        self.sv["fatal_color"] = [1.0, 0.0, 0.5]
         self.sv.endUpdate()
-        result = self.sv.get("fatal_color")
+        result = self.sv["fatal_color"]
         self.assertIsInstance(result, rdl2.Rgb)
         self.assertAlmostEqual(result.r, 1.0)
         self.assertAlmostEqual(result.g, 0.0)
@@ -551,9 +551,9 @@ class TestMathImplicitConversion(_WithDsos):
 
     def test_rgb_from_tuple_at_cpp_boundary(self):
         self.sv.beginUpdate()
-        self.sv.set("fatal_color", (0.2, 0.4, 0.6))
+        self.sv["fatal_color"] = (0.2, 0.4, 0.6)
         self.sv.endUpdate()
-        result = self.sv.get("fatal_color")
+        result = self.sv["fatal_color"]
         self.assertIsInstance(result, rdl2.Rgb)
         self.assertAlmostEqual(result.r, 0.2)
         self.assertAlmostEqual(result.b, 0.6)
@@ -1050,37 +1050,37 @@ class TestSceneObject(_WithDsos):
     def _sv_set_get(self, attr_name, value):
         """Helper: set then get an attribute on SceneVariables and return the result."""
         self.sv.beginUpdate()
-        self.sv.set(attr_name, value)
+        self.sv[attr_name] = value
         self.sv.endUpdate()
-        return self.sv.get(attr_name)
+        return self.sv[attr_name]
 
     def test_get_set_bool(self):
-        orig = self.sv.get("slerp_xforms")
+        orig = self.sv["slerp_xforms"]
         result = self._sv_set_get("slerp_xforms", True)
         self.assertIs(result, True)
         # restore
         self._sv_set_get("slerp_xforms", orig)
 
     def test_get_set_int(self):
-        orig = self.sv.get("image_width")
+        orig = self.sv["image_width"]
         result = self._sv_set_get("image_width", 1280)
         self.assertEqual(result, 1280)
         self._sv_set_get("image_width", orig)
 
     def test_get_set_float(self):
-        orig = self.sv.get("frame")
+        orig = self.sv["frame"]
         result = self._sv_set_get("frame", 42.5)
         self.assertAlmostEqual(result, 42.5)
         self._sv_set_get("frame", orig)
 
     def test_get_set_string(self):
-        orig = self.sv.get("output_file")
+        orig = self.sv["output_file"]
         result = self._sv_set_get("output_file", "/tmp/test.exr")
         self.assertEqual(result, "/tmp/test.exr")
         self._sv_set_get("output_file", orig)
 
     def test_get_set_rgb(self):
-        orig = self.sv.get("fatal_color")
+        orig = self.sv["fatal_color"]
         new_val = rdl2.Rgb(1.0, 0.0, 0.5)
         result = self._sv_set_get("fatal_color", new_val)
         self.assertIsInstance(result, rdl2.Rgb)
@@ -1089,41 +1089,41 @@ class TestSceneObject(_WithDsos):
         self._sv_set_get("fatal_color", orig)
 
     def test_get_with_timestep(self):
-        # frame is a float — reading it at TIMESTEP_BEGIN should work
-        val = self.sv.get("frame", rdl2.TIMESTEP_BEGIN)
+        # tuple key: (attr_name, timestep)
+        val = self.sv["frame", rdl2.TIMESTEP_BEGIN]
         self.assertIsInstance(val, float)
 
     def test_get_returns_correct_types(self):
-        self.assertIsInstance(self.sv.get("image_width"), int)
-        self.assertIsInstance(self.sv.get("frame"), float)
-        self.assertIsInstance(self.sv.get("slerp_xforms"), bool)
-        self.assertIsInstance(self.sv.get("output_file"), str)
-        self.assertIsInstance(self.sv.get("fatal_color"), rdl2.Rgb)
+        self.assertIsInstance(self.sv["image_width"], int)
+        self.assertIsInstance(self.sv["frame"], float)
+        self.assertIsInstance(self.sv["slerp_xforms"], bool)
+        self.assertIsInstance(self.sv["output_file"], str)
+        self.assertIsInstance(self.sv["fatal_color"], rdl2.Rgb)
 
     # ---- update guard ----
 
     def test_begin_end_update(self):
         self.sv.beginUpdate()
-        self.sv.set("image_width", 640)
+        self.sv["image_width"] = 640
         self.sv.endUpdate()
-        self.assertEqual(self.sv.get("image_width"), 640)
+        self.assertEqual(self.sv["image_width"], 640)
 
     def test_update_guard_context_manager(self):
         with rdl2.UpdateGuard(self.sv):
-            self.sv.set("image_height", 480)
-        self.assertEqual(self.sv.get("image_height"), 480)
+            self.sv["image_height"] = 480
+        self.assertEqual(self.sv["image_height"], 480)
 
     # ---- change tracking ----
 
     def test_has_changed(self):
         self.sv.beginUpdate()
-        self.sv.set("frame", 999.0)
+        self.sv["frame"] = 999.0
         self.sv.endUpdate()
         self.assertTrue(self.sv.hasChanged("frame"))
 
     def test_is_dirty(self):
         self.sv.beginUpdate()
-        self.sv.set("frame", 1.0)
+        self.sv["frame"] = 1.0
         self.sv.endUpdate()
         # After a set, isDirty should be true (commitAllChanges clears it)
         self.assertTrue(self.sv.isDirty())
@@ -1135,14 +1135,14 @@ class TestSceneObject(_WithDsos):
 
     def test_is_default_after_reset(self):
         self.sv.beginUpdate()
-        self.sv.set("fps", 30.0)
+        self.sv["fps"] = 30.0
         self.sv.resetToDefault("fps")
         self.sv.endUpdate()
         self.assertTrue(self.sv.isDefault("fps"))
 
     def test_reset_all_to_default(self):
         self.sv.beginUpdate()
-        self.sv.set("image_width", 9999)
+        self.sv["image_width"] = 9999
         self.sv.resetAllToDefault()
         self.sv.endUpdate()
         self.assertTrue(self.sv.isDefault("image_width"))
@@ -1162,6 +1162,54 @@ class TestSceneObject(_WithDsos):
         dst.beginUpdate()
         dst.copyAll(src)
         dst.endUpdate()
+
+    # ---- dict-style access ----
+
+    def test_contains_known_attr(self):
+        self.assertIn("image_width", self.sv)
+
+    def test_contains_unknown_attr(self):
+        self.assertNotIn("nonexistent_attribute_xyz", self.sv)
+
+    def test_getitem_string_key(self):
+        val = self.sv["image_width"]
+        self.assertIsInstance(val, int)
+
+    def test_setitem_string_key(self):
+        orig = self.sv["image_width"]
+        self.sv.beginUpdate()
+        self.sv["image_width"] = 512
+        self.sv.endUpdate()
+        self.assertEqual(self.sv["image_width"], 512)
+        self.sv.beginUpdate()
+        self.sv["image_width"] = orig
+        self.sv.endUpdate()
+
+    def test_getitem_timestep_tuple_key(self):
+        val = self.sv["frame", rdl2.TIMESTEP_BEGIN]
+        self.assertIsInstance(val, float)
+
+    def test_setitem_timestep_tuple_key(self):
+        orig = self.sv["frame", rdl2.TIMESTEP_BEGIN]
+        self.sv.beginUpdate()
+        self.sv["frame", rdl2.TIMESTEP_BEGIN] = 77.0
+        self.sv.endUpdate()
+        self.assertAlmostEqual(self.sv["frame"], 77.0)
+        self.sv.beginUpdate()
+        self.sv["frame"] = orig
+        self.sv.endUpdate()
+
+    def test_getitem_bad_key_type_raises(self):
+        with self.assertRaises((KeyError, TypeError)):
+            _ = self.sv[42]
+
+    def test_getitem_bad_tuple_length_raises(self):
+        with self.assertRaises((KeyError, TypeError)):
+            _ = self.sv["frame", rdl2.TIMESTEP_BEGIN, "extra"]
+
+    def test_getitem_unknown_attr_raises(self):
+        with self.assertRaises(Exception):
+            _ = self.sv["this_attr_does_not_exist"]
 
 
 # ===========================================================================
@@ -1647,7 +1695,7 @@ class TestAsciiRoundTrip(unittest.TestCase):
         # Write
         write_ctx = _make_ctx()
         write_ctx.getSceneVariables().beginUpdate()
-        write_ctx.getSceneVariables().set("image_width", 1234)
+        write_ctx.getSceneVariables()["image_width"] = 1234
         write_ctx.getSceneVariables().endUpdate()
 
         writer = rdl2.AsciiWriter(write_ctx)
@@ -1659,7 +1707,7 @@ class TestAsciiRoundTrip(unittest.TestCase):
         read_ctx = _make_ctx()
         reader = rdl2.AsciiReader(read_ctx)
         reader.fromString(rdla)
-        self.assertEqual(read_ctx.getSceneVariables().get("image_width"), 1234)
+        self.assertEqual(read_ctx.getSceneVariables()["image_width"], 1234)
 
     def test_round_trip_preserves_object_names(self):
         write_ctx = _make_ctx(load_dsos=True)

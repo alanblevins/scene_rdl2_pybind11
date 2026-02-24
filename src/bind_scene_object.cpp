@@ -294,19 +294,47 @@ void bind_scene_object(py::module_& m)
         .def("asShadowReceiverSet", [](rdl2::SceneObject* s) -> rdl2::ShadowReceiverSet* {
             return s->asA<rdl2::ShadowReceiverSet>();
         }, py::return_value_policy::reference)
-        // Dynamic attribute access
-        .def("get", [](const rdl2::SceneObject& self, const std::string& name) {
-            return getAttrByName(self, name, rdl2::TIMESTEP_BEGIN);
-        }, py::arg("name"), "Get attribute value by name (at TIMESTEP_BEGIN).")
-        .def("get", [](const rdl2::SceneObject& self, const std::string& name, rdl2::AttributeTimestep ts) {
-            return getAttrByName(self, name, ts);
-        }, py::arg("name"), py::arg("timestep"), "Get attribute value by name at specific timestep.")
-        .def("set", [](rdl2::SceneObject& self, const std::string& name, py::object value) {
-            setAttrByName(self, name, value, rdl2::TIMESTEP_BEGIN);
-        }, py::arg("name"), py::arg("value"), "Set attribute value by name (at TIMESTEP_BEGIN).")
-        .def("set", [](rdl2::SceneObject& self, const std::string& name, py::object value, rdl2::AttributeTimestep ts) {
-            setAttrByName(self, name, value, ts);
-        }, py::arg("name"), py::arg("value"), py::arg("timestep"), "Set attribute value by name at specific timestep.")
+        // Dictionary-style attribute access
+        // obj["attr"]                         -> get at TIMESTEP_BEGIN
+        // obj["attr", rdl2.TIMESTEP_END]      -> get at specific timestep
+        .def("__getitem__", [](const rdl2::SceneObject& self, py::object key) -> py::object {
+            if (py::isinstance<py::str>(key)) {
+                return getAttrByName(self, key.cast<std::string>(), rdl2::TIMESTEP_BEGIN);
+            }
+            if (py::isinstance<py::tuple>(key)) {
+                py::tuple t = key.cast<py::tuple>();
+                if (t.size() != 2)
+                    throw py::key_error("key tuple must be (attr_name, timestep)");
+                return getAttrByName(self,
+                                     t[0].cast<std::string>(),
+                                     t[1].cast<rdl2::AttributeTimestep>());
+            }
+            throw py::key_error("key must be a string or (string, AttributeTimestep) tuple");
+        })
+        // obj["attr"] = value                 -> set at TIMESTEP_BEGIN
+        // obj["attr", rdl2.TIMESTEP_END] = v  -> set at specific timestep
+        .def("__setitem__", [](rdl2::SceneObject& self, py::object key, py::object value) {
+            if (py::isinstance<py::str>(key)) {
+                setAttrByName(self, key.cast<std::string>(), value, rdl2::TIMESTEP_BEGIN);
+                return;
+            }
+            if (py::isinstance<py::tuple>(key)) {
+                py::tuple t = key.cast<py::tuple>();
+                if (t.size() != 2)
+                    throw py::key_error("key tuple must be (attr_name, timestep)");
+                setAttrByName(self,
+                              t[0].cast<std::string>(),
+                              value,
+                              t[1].cast<rdl2::AttributeTimestep>());
+                return;
+            }
+            throw py::key_error("key must be a string or (string, AttributeTimestep) tuple");
+        })
+        // "attr" in obj -> True if the SceneClass declares that attribute
+        .def("__contains__", [](const rdl2::SceneObject& self, const std::string& name) {
+            try { self.getSceneClass().getAttribute(name); return true; }
+            catch (...) { return false; }
+        })
         // Update guard
         .def("beginUpdate", &rdl2::SceneObject::beginUpdate)
         .def("endUpdate",   &rdl2::SceneObject::endUpdate)
