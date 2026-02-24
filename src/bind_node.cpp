@@ -15,6 +15,7 @@ void bind_node(py::module_& m)
             return self.get(rdl2::Node::sNodeXformKey);
         }, "Returns the node transform matrix (Mat4d).")
         .def("setNodeXform", [](rdl2::Node& self, const rdl2::Mat4d& xform) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.set(rdl2::Node::sNodeXformKey, xform);
         }, py::arg("xform"), "Sets the node transform matrix.");
 
@@ -32,8 +33,14 @@ void bind_node(py::module_& m)
         .def("getFar",  [](const rdl2::Camera& self) {
             return self.get(rdl2::Camera::sFarKey);
         })
-        .def("setNear", &rdl2::Camera::setNear, py::arg("near"))
-        .def("setFar",  &rdl2::Camera::setFar,  py::arg("far"));
+        .def("setNear", [](rdl2::Camera& self, float near) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.setNear(near);
+        }, py::arg("near"))
+        .def("setFar", [](rdl2::Camera& self, float far) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.setFar(far);
+        }, py::arg("far"));
 
     // -----------------------------------------------------------------------
     // Geometry (inherits Node)

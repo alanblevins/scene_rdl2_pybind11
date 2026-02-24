@@ -53,11 +53,10 @@ sv  = ctx.getSceneVariables()
 # Read an attribute using dict-style access
 print(sv['frame'])          # 0.0
 
-# Write attributes inside an update guard
-with rdl2.UpdateGuard(sv):
-    sv['image_width']  = 1920
-    sv['image_height'] = 1080
-    sv['frame']        = 12.5
+# Write attributes — no setup required
+sv['image_width']  = 1920
+sv['image_height'] = 1080
+sv['frame']        = 12.5
 
 # Access a blur (motion-blur) sample at a specific timestep
 sv['frame', rdl2.TIMESTEP_END]
@@ -189,9 +188,8 @@ Full set: `Rgb`, `Rgba`, `Vec2f/d`, `Vec3f/d`, `Vec4f/d`, `Mat4f/d`.
 Math types can be constructed implicitly from Python lists or tuples wherever a C++ value or const-reference parameter is expected:
 
 ```python
-with rdl2.UpdateGuard(sv):
-    sv['fatal_color'] = [1.0, 0.0, 0.0]          # list → Rgb
-    sv['fatal_color'] = (0.5, 0.5, 0.5)          # tuple → Rgb
+sv['fatal_color'] = [1.0, 0.0, 0.0]          # list → Rgb
+sv['fatal_color'] = (0.5, 0.5, 0.5)          # tuple → Rgb
 
 geo.setNodeXform([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])  # list-of-lists → Mat4d
 ```
@@ -206,11 +204,10 @@ ctx.loadAllSceneClasses()
 
 ud = ctx.createSceneObject('UserData', '/my/primvars').asUserData()
 
-with rdl2.UpdateGuard(ud):
-    ud.setRate(rdl2.UserData.Rate.VERTEX)
-    ud.setFloatData('Cd_r', [0.1, 0.2, 0.3])           # single timestep
-    ud.setVec3fData('N', [rdl2.Vec3f(0,1,0)],           # dual timestep (blur)
-                         [rdl2.Vec3f(0,0,1)])
+ud.setRate(rdl2.UserData.Rate.VERTEX)
+ud.setFloatData('Cd_r', [0.1, 0.2, 0.3])           # single timestep
+ud.setVec3fData('N', [rdl2.Vec3f(0,1,0)],           # dual timestep (blur)
+                     [rdl2.Vec3f(0,0,1)])
 
 print(ud.getFloatKey())         # 'Cd_r'
 print(list(ud.getFloatValues()))  # [0.1, 0.2, 0.3]
@@ -236,10 +233,9 @@ Rate values: `UserData.Rate.AUTO`, `CONSTANT`, `PART`, `UNIFORM`, `VERTEX`, `VAR
 
 ```python
 md = ctx.createSceneObject('Metadata', '/exr/meta').asMetadata()
-with rdl2.UpdateGuard(md):
-    md.setAttributes(['title', 'date'],
-                     ['string', 'string'],
-                     ['My Render', '2026-01-01'])
+md.setAttributes(['title', 'date'],
+                 ['string', 'string'],
+                 ['My Render', '2026-01-01'])
 
 print(md.getAttributeNames())   # ['title', 'date']
 print(md.getAttributeValues())  # ['My Render', '2026-01-01']
@@ -251,8 +247,7 @@ print(md.getAttributeValues())  # ['My Render', '2026-01-01']
 ts  = ctx.createSceneObject('TraceSet', '/traceset').asTraceSet()
 geo = ctx.createSceneObject('BoxGeometry', '/box').asGeometry()
 
-with rdl2.UpdateGuard(ts):
-    aid = ts.assign(geo, 'part_A')   # returns assignment ID
+aid = ts.assign(geo, 'part_A')   # returns assignment ID
 
 geom, part = ts.lookupGeomAndPart(aid)
 ids = ts.getAssignmentIds(geo)       # list[int]
@@ -264,7 +259,7 @@ ids = ts.getAssignmentIds(geo)       # list[int]
 |---|---|
 | **Math** | `Rgb` `Rgba` `Vec2f` `Vec2d` `Vec3f` `Vec3d` `Vec4f` `Vec4d` `Mat4f` `Mat4d` |
 | **Enums** | `AttributeType` `AttributeFlags` `AttributeTimestep` `SceneObjectInterface` `MotionBlurType` `PixelFilterType` `TaskDistributionType` `VolumeOverlapMode` `ShadowTerminatorFix` `TextureFilterType` `GeometrySideType` `UserData.Rate` |
-| **Scene** | `SceneContext` `SceneClass` `SceneObject` `SceneVariables` `UpdateGuard` |
+| **Scene** | `SceneContext` `SceneClass` `SceneObject` `SceneVariables` |
 | **Nodes** | `Node` `Camera` `Geometry` `EnvMap` `Joint` |
 | **Light** | `Light` |
 | **Shaders** | `Shader` `RootShader` `Material` `Displacement` `VolumeShader` `Map` `NormalMap` |

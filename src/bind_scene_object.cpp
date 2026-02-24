@@ -90,6 +90,7 @@ static void setAttrByName(
     py::object value,
     rdl2::AttributeTimestep ts = rdl2::TIMESTEP_BEGIN)
 {
+    rdl2::SceneObject::UpdateGuard guard(&self);
     const rdl2::Attribute* attr = self.getSceneClass().getAttribute(name);
     switch (attr->getType()) {
         case rdl2::TYPE_BOOL:
@@ -208,6 +209,7 @@ static rdl2::SceneObject* getBindingByName(const rdl2::SceneObject& self, const 
 }
 
 static void setBindingByName(rdl2::SceneObject& self, const std::string& name, rdl2::SceneObject* obj) {
+    rdl2::SceneObject::UpdateGuard guard(&self);
     self.setBinding(name, obj);
 }
 
@@ -358,17 +360,19 @@ void bind_scene_object(py::module_& m)
             try { self.getSceneClass().getAttribute(name); return true; }
             catch (...) { return false; }
         })
-        // Update guard
-        .def("beginUpdate", &rdl2::SceneObject::beginUpdate)
-        .def("endUpdate",   &rdl2::SceneObject::endUpdate)
         // Reset
-        .def("resetToDefault",
-             (void (rdl2::SceneObject::*)(const std::string&)) &rdl2::SceneObject::resetToDefault,
-             py::arg("name"))
-        .def("resetToDefault",
-             (void (rdl2::SceneObject::*)(const rdl2::Attribute*)) &rdl2::SceneObject::resetToDefault,
-             py::arg("attribute"), py::return_value_policy::reference)
-        .def("resetAllToDefault", &rdl2::SceneObject::resetAllToDefault)
+        .def("resetToDefault", [](rdl2::SceneObject& self, const std::string& name) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.resetToDefault(name);
+        }, py::arg("name"))
+        .def("resetToDefault", [](rdl2::SceneObject& self, const rdl2::Attribute* attr) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.resetToDefault(attr);
+        }, py::arg("attribute"))
+        .def("resetAllToDefault", [](rdl2::SceneObject& self) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.resetAllToDefault();
+        })
         // Default checking
         .def("isDefault",          &isDefaultByName,          py::arg("name"))
         .def("isDefaultAndUnbound",&isDefaultAndUnboundByName, py::arg("name"))
@@ -382,11 +386,16 @@ void bind_scene_object(py::module_& m)
              py::return_value_policy::reference)
         .def("setBinding", &setBindingByName, py::arg("name"), py::arg("object"))
         .def("setBinding", [](rdl2::SceneObject& self, const rdl2::Attribute& attr, rdl2::SceneObject* obj) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setBinding(attr, obj);
         }, py::arg("attribute"), py::arg("object"))
         // Copy
-        .def("copyAll", &rdl2::SceneObject::copyAll, py::arg("source"))
+        .def("copyAll", [](rdl2::SceneObject& self, const rdl2::SceneObject& source) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.copyAll(source);
+        }, py::arg("source"))
         .def("copyValues", [](rdl2::SceneObject& self, const std::string& attrName, const rdl2::SceneObject& source) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             const rdl2::Attribute* attr = self.getSceneClass().getAttribute(attrName);
             self.copyValues(*attr, source);
         }, py::arg("attribute_name"), py::arg("source"))
@@ -394,9 +403,4 @@ void bind_scene_object(py::module_& m)
             return "<SceneObject class='" + obj.getSceneClass().getName() + "' name='" + obj.getName() + "'>";
         });
 
-    // UpdateGuard as a context manager
-    py::class_<rdl2::SceneObject::UpdateGuard>(m, "UpdateGuard")
-        .def(py::init<rdl2::SceneObject*>(), py::arg("scene_object"))
-        .def("__enter__", [](rdl2::SceneObject::UpdateGuard& g) -> rdl2::SceneObject::UpdateGuard& { return g; })
-        .def("__exit__",  [](rdl2::SceneObject::UpdateGuard&, py::object, py::object, py::object) {});
 }

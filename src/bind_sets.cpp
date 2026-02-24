@@ -17,10 +17,19 @@ void bind_sets(py::module_& m)
             return std::vector<rdl2::SceneObject*>(idx.begin(), idx.end());
         }, py::return_value_policy::reference,
         "Returns a list of Geometry SceneObjects in this set.")
-        .def("add",      &rdl2::GeometrySet::add,      py::arg("geometry"))
-        .def("remove",   &rdl2::GeometrySet::remove,   py::arg("geometry"))
+        .def("add", [](rdl2::GeometrySet& self, rdl2::Geometry* g) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.add(g);
+        }, py::arg("geometry"))
+        .def("remove", [](rdl2::GeometrySet& self, rdl2::Geometry* g) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.remove(g);
+        }, py::arg("geometry"))
         .def("contains", &rdl2::GeometrySet::contains, py::arg("geometry"))
-        .def("clear",    &rdl2::GeometrySet::clear)
+        .def("clear", [](rdl2::GeometrySet& self) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.clear();
+        })
         .def("isStatic", &rdl2::GeometrySet::isStatic)
         .def("haveGeometriesChanged", &rdl2::GeometrySet::haveGeometriesChanged);
 
@@ -32,10 +41,19 @@ void bind_sets(py::module_& m)
             return self.getLights();
         }, py::return_value_policy::reference,
         "Returns a list of Light SceneObjects in this set.")
-        .def("add",      &rdl2::LightSet::add,      py::arg("light"))
-        .def("remove",   &rdl2::LightSet::remove,   py::arg("light"))
+        .def("add", [](rdl2::LightSet& self, rdl2::Light* l) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.add(l);
+        }, py::arg("light"))
+        .def("remove", [](rdl2::LightSet& self, rdl2::Light* l) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.remove(l);
+        }, py::arg("light"))
         .def("contains", &rdl2::LightSet::contains, py::arg("light"))
-        .def("clear",    &rdl2::LightSet::clear);
+        .def("clear", [](rdl2::LightSet& self) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.clear();
+        });
 
     // -----------------------------------------------------------------------
     // LightFilter (inherits SceneObject)
@@ -52,10 +70,19 @@ void bind_sets(py::module_& m)
             return std::vector<rdl2::SceneObject*>(v.begin(), v.end());
         }, py::return_value_policy::reference,
         "Returns a list of LightFilter SceneObjects in this set.")
-        .def("add",      &rdl2::LightFilterSet::add,      py::arg("light_filter"))
-        .def("remove",   &rdl2::LightFilterSet::remove,   py::arg("light_filter"))
+        .def("add", [](rdl2::LightFilterSet& self, rdl2::LightFilter* lf) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.add(lf);
+        }, py::arg("light_filter"))
+        .def("remove", [](rdl2::LightFilterSet& self, rdl2::LightFilter* lf) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.remove(lf);
+        }, py::arg("light_filter"))
         .def("contains", &rdl2::LightFilterSet::contains, py::arg("light_filter"))
-        .def("clear",    &rdl2::LightFilterSet::clear);
+        .def("clear", [](rdl2::LightFilterSet& self) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.clear();
+        });
 
     // -----------------------------------------------------------------------
     // ShadowSet (inherits LightSet)
@@ -83,6 +110,7 @@ void bind_sets(py::module_& m)
                                  const std::vector<std::string>& names,
                                  const std::vector<std::string>& types,
                                  const std::vector<std::string>& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             rdl2::StringVector n(names), t(types), v(values);
             self.setAttributes(n, t, v);
         }, py::arg("names"), py::arg("types"), py::arg("values"),
@@ -106,9 +134,11 @@ void bind_sets(py::module_& m)
     py::class_<rdl2::TraceSet, rdl2::SceneObject>(m, "TraceSet")
         .def("getAssignmentCount", &rdl2::TraceSet::getAssignmentCount,
              "Returns the number of Geometry/Part assignments in this TraceSet.")
-        .def("assign", &rdl2::TraceSet::assign,
-             py::arg("geometry"), py::arg("part_name"),
-             "Add a Geometry/Part pair and return its assignment ID.")
+        .def("assign", [](rdl2::TraceSet& self, rdl2::Geometry* g, const std::string& part) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            return self.assign(g, part);
+        }, py::arg("geometry"), py::arg("part_name"),
+        "Add a Geometry/Part pair and return its assignment ID.")
         .def("lookupGeomAndPart", [](const rdl2::TraceSet& self, int32_t assignmentId) {
             auto pair = self.lookupGeomAndPart(assignmentId);
             return py::make_tuple(
@@ -151,6 +181,7 @@ void bind_sets(py::module_& m)
 
     ud
         .def("setRate", [](rdl2::UserData& self, rdl2::UserData::Rate rate) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setRate(static_cast<int>(rate));
         }, py::arg("rate"))
         .def("getRate", [](const rdl2::UserData& self) {
@@ -160,6 +191,7 @@ void bind_sets(py::module_& m)
         .def("hasBoolData",  &rdl2::UserData::hasBoolData)
         .def("setBoolData", [](rdl2::UserData& self, const std::string& key,
                                const rdl2::BoolVector& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setBoolData(key, values);
         }, py::arg("key"), py::arg("values"))
         .def("getBoolKey",    &rdl2::UserData::getBoolKey)
@@ -168,6 +200,7 @@ void bind_sets(py::module_& m)
         .def("hasIntData",  &rdl2::UserData::hasIntData)
         .def("setIntData", [](rdl2::UserData& self, const std::string& key,
                               const rdl2::IntVector& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setIntData(key, values);
         }, py::arg("key"), py::arg("values"))
         .def("getIntKey",    &rdl2::UserData::getIntKey)
@@ -178,11 +211,13 @@ void bind_sets(py::module_& m)
         .def("hasFloatData1", &rdl2::UserData::hasFloatData1)
         .def("setFloatData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::FloatVector& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setFloatData(key, values);
         }, py::arg("key"), py::arg("values"))
         .def("setFloatData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::FloatVector& values0,
                                 const rdl2::FloatVector& values1) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setFloatData(key, values0, values1);
         }, py::arg("key"), py::arg("values0"), py::arg("values1"))
         .def("getFloatKey",    &rdl2::UserData::getFloatKey)
@@ -193,6 +228,7 @@ void bind_sets(py::module_& m)
         .def("hasStringData",  &rdl2::UserData::hasStringData)
         .def("setStringData", [](rdl2::UserData& self, const std::string& key,
                                  const rdl2::StringVector& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setStringData(key, values);
         }, py::arg("key"), py::arg("values"))
         .def("getStringKey",    &rdl2::UserData::getStringKey)
@@ -203,11 +239,13 @@ void bind_sets(py::module_& m)
         .def("hasColorData1", &rdl2::UserData::hasColorData1)
         .def("setColorData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::RgbVector& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setColorData(key, values);
         }, py::arg("key"), py::arg("values"))
         .def("setColorData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::RgbVector& values0,
                                 const rdl2::RgbVector& values1) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setColorData(key, values0, values1);
         }, py::arg("key"), py::arg("values0"), py::arg("values1"))
         .def("getColorKey",    &rdl2::UserData::getColorKey)
@@ -220,11 +258,13 @@ void bind_sets(py::module_& m)
         .def("hasVec2fData1", &rdl2::UserData::hasVec2fData1)
         .def("setVec2fData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::Vec2fVector& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setVec2fData(key, values);
         }, py::arg("key"), py::arg("values"))
         .def("setVec2fData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::Vec2fVector& values0,
                                 const rdl2::Vec2fVector& values1) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setVec2fData(key, values0, values1);
         }, py::arg("key"), py::arg("values0"), py::arg("values1"))
         .def("getVec2fKey",    &rdl2::UserData::getVec2fKey)
@@ -237,11 +277,13 @@ void bind_sets(py::module_& m)
         .def("hasVec3fData1", &rdl2::UserData::hasVec3fData1)
         .def("setVec3fData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::Vec3fVector& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setVec3fData(key, values);
         }, py::arg("key"), py::arg("values"))
         .def("setVec3fData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::Vec3fVector& values0,
                                 const rdl2::Vec3fVector& values1) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setVec3fData(key, values0, values1);
         }, py::arg("key"), py::arg("values0"), py::arg("values1"))
         .def("getVec3fKey",    &rdl2::UserData::getVec3fKey)
@@ -254,11 +296,13 @@ void bind_sets(py::module_& m)
         .def("hasMat4fData1", &rdl2::UserData::hasMat4fData1)
         .def("setMat4fData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::Mat4fVector& values) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setMat4fData(key, values);
         }, py::arg("key"), py::arg("values"))
         .def("setMat4fData", [](rdl2::UserData& self, const std::string& key,
                                 const rdl2::Mat4fVector& values0,
                                 const rdl2::Mat4fVector& values1) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
             self.setMat4fData(key, values0, values1);
         }, py::arg("key"), py::arg("values0"), py::arg("values1"))
         .def("getMat4fKey",    &rdl2::UserData::getMat4fKey)

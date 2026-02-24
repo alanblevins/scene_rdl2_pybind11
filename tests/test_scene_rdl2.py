@@ -541,9 +541,7 @@ class TestMathImplicitConversion(_WithDsos):
         cls.geo = cls.ctx.createSceneObject(geo_name, "/test/implicit/geo").asGeometry()
 
     def test_rgb_from_list_at_cpp_boundary(self):
-        self.sv.beginUpdate()
         self.sv["fatal_color"] = [1.0, 0.0, 0.5]
-        self.sv.endUpdate()
         result = self.sv["fatal_color"]
         self.assertIsInstance(result, rdl2.Rgb)
         self.assertAlmostEqual(result.r, 1.0)
@@ -551,9 +549,7 @@ class TestMathImplicitConversion(_WithDsos):
         self.assertAlmostEqual(result.b, 0.5)
 
     def test_rgb_from_tuple_at_cpp_boundary(self):
-        self.sv.beginUpdate()
         self.sv["fatal_color"] = (0.2, 0.4, 0.6)
-        self.sv.endUpdate()
         result = self.sv["fatal_color"]
         self.assertIsInstance(result, rdl2.Rgb)
         self.assertAlmostEqual(result.r, 0.2)
@@ -561,12 +557,10 @@ class TestMathImplicitConversion(_WithDsos):
 
     def test_mat4d_from_nested_list_at_cpp_boundary(self):
         # setNodeXform takes const Mat4d& — implicit conversion fires for lists
-        self.geo.beginUpdate()
         self.geo.setNodeXform([[1, 0, 0, 0],
                                [0, 1, 0, 0],
                                [0, 0, 1, 0],
                                [5, 6, 7, 1]])
-        self.geo.endUpdate()
         result = self.geo.getNodeXform()
         self.assertIsInstance(result, rdl2.Mat4d)
         self.assertAlmostEqual(result.vw.x, 5.0)
@@ -574,12 +568,10 @@ class TestMathImplicitConversion(_WithDsos):
         self.assertAlmostEqual(result.vw.z, 7.0)
 
     def test_mat4d_from_nested_tuple_at_cpp_boundary(self):
-        self.geo.beginUpdate()
         self.geo.setNodeXform(((1, 0, 0, 0),
                                (0, 1, 0, 0),
                                (0, 0, 1, 0),
                                (10, 20, 30, 1)))
-        self.geo.endUpdate()
         result = self.geo.getNodeXform()
         self.assertAlmostEqual(result.vw.x, 10.0)
         self.assertAlmostEqual(result.vw.y, 20.0)
@@ -1052,9 +1044,7 @@ class TestSceneObject(_WithDsos):
 
     def _sv_set_get(self, attr_name, value):
         """Helper: set then get an attribute on SceneVariables and return the result."""
-        self.sv.beginUpdate()
         self.sv[attr_name] = value
-        self.sv.endUpdate()
         return self.sv[attr_name]
 
     def test_get_set_bool(self):
@@ -1105,29 +1095,14 @@ class TestSceneObject(_WithDsos):
 
     # ---- update guard ----
 
-    def test_begin_end_update(self):
-        self.sv.beginUpdate()
-        self.sv["image_width"] = 640
-        self.sv.endUpdate()
-        self.assertEqual(self.sv["image_width"], 640)
 
-    def test_update_guard_context_manager(self):
-        with rdl2.UpdateGuard(self.sv):
-            self.sv["image_height"] = 480
-        self.assertEqual(self.sv["image_height"], 480)
-
-    # ---- change tracking ----
 
     def test_has_changed(self):
-        self.sv.beginUpdate()
         self.sv["frame"] = 999.0
-        self.sv.endUpdate()
         self.assertTrue(self.sv.hasChanged("frame"))
 
     def test_is_dirty(self):
-        self.sv.beginUpdate()
         self.sv["frame"] = 1.0
-        self.sv.endUpdate()
         # After a set, isDirty should be true (commitAllChanges clears it)
         self.assertTrue(self.sv.isDirty())
 
@@ -1137,23 +1112,17 @@ class TestSceneObject(_WithDsos):
     # ---- default / reset ----
 
     def test_is_default_after_reset(self):
-        self.sv.beginUpdate()
         self.sv["fps"] = 30.0
         self.sv.resetToDefault("fps")
-        self.sv.endUpdate()
         self.assertTrue(self.sv.isDefault("fps"))
 
     def test_reset_all_to_default(self):
-        self.sv.beginUpdate()
         self.sv["image_width"] = 9999
         self.sv.resetAllToDefault()
-        self.sv.endUpdate()
         self.assertTrue(self.sv.isDefault("image_width"))
 
     def test_is_default_and_unbound(self):
-        self.sv.beginUpdate()
         self.sv.resetToDefault("output_file")
-        self.sv.endUpdate()
         result = self.sv.isDefaultAndUnbound("output_file")
         self.assertIsInstance(result, bool)
 
@@ -1162,9 +1131,7 @@ class TestSceneObject(_WithDsos):
     def test_copy_all(self):
         src = self.ctx.createSceneObject("BoxGeometry", "/test/so/box_src")
         dst = self.ctx.createSceneObject("BoxGeometry", "/test/so/box_dst")
-        dst.beginUpdate()
         dst.copyAll(src)
-        dst.endUpdate()
 
     # ---- dict-style access ----
 
@@ -1180,13 +1147,9 @@ class TestSceneObject(_WithDsos):
 
     def test_setitem_string_key(self):
         orig = self.sv["image_width"]
-        self.sv.beginUpdate()
         self.sv["image_width"] = 512
-        self.sv.endUpdate()
         self.assertEqual(self.sv["image_width"], 512)
-        self.sv.beginUpdate()
         self.sv["image_width"] = orig
-        self.sv.endUpdate()
 
     def test_getitem_timestep_tuple_key(self):
         val = self.sv["frame", rdl2.TIMESTEP_BEGIN]
@@ -1194,13 +1157,9 @@ class TestSceneObject(_WithDsos):
 
     def test_setitem_timestep_tuple_key(self):
         orig = self.sv["frame", rdl2.TIMESTEP_BEGIN]
-        self.sv.beginUpdate()
         self.sv["frame", rdl2.TIMESTEP_BEGIN] = 77.0
-        self.sv.endUpdate()
         self.assertAlmostEqual(self.sv["frame"], 77.0)
-        self.sv.beginUpdate()
         self.sv["frame"] = orig
-        self.sv.endUpdate()
 
     def test_getitem_bad_key_type_raises(self):
         with self.assertRaises((KeyError, TypeError)):
@@ -1301,9 +1260,7 @@ class TestNode(_WithDsos):
             rdl2.Vec4d(0, 0, 1, 0),
             rdl2.Vec4d(10, 20, 30, 1),
         )
-        self.cam.beginUpdate()
         self.cam.setNodeXform(xform)
-        self.cam.endUpdate()
         result = self.cam.getNodeXform()
         self.assertAlmostEqual(result.vw.x, 10.0)
         self.assertAlmostEqual(result.vw.y, 20.0)
@@ -1317,10 +1274,8 @@ class TestNode(_WithDsos):
         self.assertGreater(far, near)
 
     def test_camera_set_near_far(self):
-        self.cam.beginUpdate()
         self.cam.setNear(0.1)
         self.cam.setFar(5000.0)
-        self.cam.endUpdate()
         self.assertAlmostEqual(self.cam.getNear(), 0.1)
         self.assertAlmostEqual(self.cam.getFar(), 5000.0)
 
@@ -1424,36 +1379,26 @@ class TestGeometrySet(_WithDsos):
 
     def test_add_and_contains(self):
         gset = self.ctx.createSceneObject("GeometrySet", "/test/geoset/add")
-        gset.beginUpdate()
         gset.add(self.geo1)
-        gset.endUpdate()
         self.assertTrue(gset.contains(self.geo1))
 
     def test_remove(self):
         gset = self.ctx.createSceneObject("GeometrySet", "/test/geoset/rem")
-        gset.beginUpdate()
         gset.add(self.geo1)
         gset.remove(self.geo1)
-        gset.endUpdate()
         self.assertFalse(gset.contains(self.geo1))
 
     def test_clear(self):
         gset = self.ctx.createSceneObject("GeometrySet", "/test/geoset/clr")
-        gset.beginUpdate()
         gset.add(self.geo1)
         gset.add(self.geo2)
-        gset.endUpdate()
-        gset.beginUpdate()
         gset.clear()
-        gset.endUpdate()
         self.assertEqual(len(gset.getGeometries()), 0)
 
     def test_get_geometries_returns_list(self):
         gset = self.ctx.createSceneObject("GeometrySet", "/test/geoset/lst")
-        gset.beginUpdate()
         gset.add(self.geo1)
         gset.add(self.geo2)
-        gset.endUpdate()
         geoms = gset.getGeometries()
         self.assertIsInstance(geoms, list)
         self.assertEqual(len(geoms), 2)
@@ -1482,28 +1427,20 @@ class TestLightSet(_WithDsos):
 
     def test_add_and_contains(self):
         lset = self.ctx.createSceneObject("LightSet", "/test/lightset/add")
-        lset.beginUpdate()
         lset.add(self.light1)
-        lset.endUpdate()
         self.assertTrue(lset.contains(self.light1))
 
     def test_remove(self):
         lset = self.ctx.createSceneObject("LightSet", "/test/lightset/rem")
-        lset.beginUpdate()
         lset.add(self.light1)
         lset.remove(self.light1)
-        lset.endUpdate()
         self.assertFalse(lset.contains(self.light1))
 
     def test_clear(self):
         lset = self.ctx.createSceneObject("LightSet", "/test/lightset/clr")
-        lset.beginUpdate()
         lset.add(self.light1)
         lset.add(self.light2)
-        lset.endUpdate()
-        lset.beginUpdate()
         lset.clear()
-        lset.endUpdate()
         self.assertEqual(len(lset.getLights()), 0)
 
 
@@ -1545,24 +1482,18 @@ class TestLayer(_WithDsos):
         self.assertTrue(self.layer.isLayer())
 
     def test_assign_4arg(self):
-        self.layer.beginUpdate()
         aid = self.layer.assign(self.geo, "", self.mat, self.lset)
-        self.layer.endUpdate()
         self.assertIsInstance(aid, int)
 
     def test_lookup_after_assign(self):
-        self.layer.beginUpdate()
         aid = self.layer.assign(self.geo, "", self.mat, self.lset)
-        self.layer.endUpdate()
         mat = self.layer.lookupMaterial(aid)
         lset = self.layer.lookupLightSet(aid)
         self.assertIsNotNone(mat)
         self.assertIsNotNone(lset)
 
     def test_clear(self):
-        self.layer.beginUpdate()
         self.layer.clear()
-        self.layer.endUpdate()
 
     def test_light_sets_changed_is_bool(self):
         self.assertIsInstance(self.layer.lightSetsChanged(), bool)
@@ -1702,9 +1633,7 @@ class TestBinaryReader(unittest.TestCase):
 class TestBinaryRoundTrip(unittest.TestCase):
     def test_round_trip_scene_variables(self):
         write_ctx = _make_ctx()
-        write_ctx.getSceneVariables().beginUpdate()
         write_ctx.getSceneVariables()["image_width"] = 5678
-        write_ctx.getSceneVariables().endUpdate()
 
         writer = rdl2.BinaryWriter(write_ctx)
         writer.setSkipDefaults(False)
@@ -1731,9 +1660,7 @@ class TestBinaryRoundTrip(unittest.TestCase):
 
     def test_round_trip_with_delta_encoding(self):
         write_ctx = _make_ctx()
-        write_ctx.getSceneVariables().beginUpdate()
         write_ctx.getSceneVariables()["image_height"] = 720
-        write_ctx.getSceneVariables().endUpdate()
 
         writer = rdl2.BinaryWriter(write_ctx)
         writer.setDeltaEncoding(True)
@@ -1763,20 +1690,16 @@ class TestRdlaFilePersistence(unittest.TestCase):
         # Build a scene with known, non-default content
         write_ctx = _make_ctx(load_dsos=True)
         sv = write_ctx.getSceneVariables()
-        sv.beginUpdate()
         sv["image_width"]  = 1280
         sv["image_height"] = 720
         sv["frame"]        = 12.5
-        sv.endUpdate()
 
         write_ctx.createSceneObject("RenderOutput", "/fixtures/ro")
 
         md = write_ctx.createSceneObject("Metadata", "/fixtures/meta").asMetadata()
-        md.beginUpdate()
         md.setAttributes(["title", "author"],
                          ["string", "string"],
                          ["test scene", "rdl2py"])
-        md.endUpdate()
 
         rdl2.AsciiWriter(write_ctx).toFile(cls.rdla_path)
 
@@ -1876,19 +1799,15 @@ class TestRdlbFilePersistence(unittest.TestCase):
         # Build a scene with known, non-default content
         write_ctx = _make_ctx(load_dsos=True)
         sv = write_ctx.getSceneVariables()
-        sv.beginUpdate()
         sv["image_width"]  = 1280
         sv["image_height"] = 720
         sv["frame"]        = 12.5
-        sv.endUpdate()
 
         write_ctx.createSceneObject("RenderOutput", "/fixtures/ro")
 
         ud = write_ctx.createSceneObject("UserData", "/fixtures/ud").asUserData()
-        ud.beginUpdate()
         ud.setRate(rdl2.UserData.Rate.VERTEX)
         ud.setFloatData("Cd", [0.1, 0.2, 0.3, 0.4])
-        ud.endUpdate()
 
         writer = rdl2.BinaryWriter(write_ctx)
         writer.setSkipDefaults(False)
@@ -2070,24 +1989,18 @@ class TestMetadata(_WithDsos):
 
     def test_set_and_get_attributes(self):
         md = self.md.asMetadata()
-        md.beginUpdate()
         md.setAttributes(
             ["author", "frame"],
             ["string", "int"],
             ["Alice",  "42"])
-        md.endUpdate()
         self.assertEqual(md.getAttributeNames(),  ["author", "frame"])
         self.assertEqual(md.getAttributeTypes(),  ["string", "int"])
         self.assertEqual(md.getAttributeValues(), ["Alice",  "42"])
 
     def test_set_attributes_overwrites(self):
         md = self.ctx.createSceneObject("Metadata", "/test/metadata/md2").asMetadata()
-        md.beginUpdate()
         md.setAttributes(["k"], ["string"], ["v1"])
-        md.endUpdate()
-        md.beginUpdate()
         md.setAttributes(["k2"], ["float"], ["3.14"])
-        md.endUpdate()
         # Second call replaces everything
         self.assertEqual(md.getAttributeNames(), ["k2"])
 
@@ -2119,61 +2032,47 @@ class TestTraceSet(_WithDsos):
 
     def test_assign_returns_id(self):
         ts = self.ctx.createSceneObject("TraceSet", "/test/traceset/ts_a").asTraceSet()
-        ts.beginUpdate()
         aid = ts.assign(self.geo1, "partA")
-        ts.endUpdate()
         self.assertIsInstance(aid, int)
         self.assertGreaterEqual(aid, 0)
 
     def test_assignment_count_increments(self):
         ts = self.ctx.createSceneObject("TraceSet", "/test/traceset/ts_b").asTraceSet()
-        ts.beginUpdate()
         ts.assign(self.geo1, "part1")
         ts.assign(self.geo1, "part2")
         ts.assign(self.geo2, "part1")
-        ts.endUpdate()
         self.assertEqual(ts.getAssignmentCount(), 3)
 
     def test_assign_same_pair_returns_same_id(self):
         ts = self.ctx.createSceneObject("TraceSet", "/test/traceset/ts_c").asTraceSet()
-        ts.beginUpdate()
         aid1 = ts.assign(self.geo1, "part")
         aid2 = ts.assign(self.geo1, "part")
-        ts.endUpdate()
         self.assertEqual(aid1, aid2)
         self.assertEqual(ts.getAssignmentCount(), 1)
 
     def test_contains(self):
         ts = self.ctx.createSceneObject("TraceSet", "/test/traceset/ts_d").asTraceSet()
-        ts.beginUpdate()
         ts.assign(self.geo1, "part")
-        ts.endUpdate()
         self.assertTrue(ts.contains(self.geo1))
         self.assertFalse(ts.contains(self.geo2))
 
     def test_lookup_geom_and_part(self):
         ts = self.ctx.createSceneObject("TraceSet", "/test/traceset/ts_e").asTraceSet()
-        ts.beginUpdate()
         aid = ts.assign(self.geo1, "myPart")
-        ts.endUpdate()
         geom, part = ts.lookupGeomAndPart(aid)
         self.assertIsNotNone(geom)
         self.assertEqual(part, "myPart")
 
     def test_get_assignment_id(self):
         ts = self.ctx.createSceneObject("TraceSet", "/test/traceset/ts_f").asTraceSet()
-        ts.beginUpdate()
         aid = ts.assign(self.geo1, "part")
-        ts.endUpdate()
         self.assertEqual(ts.getAssignmentId(self.geo1, "part"), aid)
         self.assertEqual(ts.getAssignmentId(self.geo2, "part"), -1)
 
     def test_get_assignment_ids(self):
         ts = self.ctx.createSceneObject("TraceSet", "/test/traceset/ts_g").asTraceSet()
-        ts.beginUpdate()
         aid1 = ts.assign(self.geo1, "p1")
         aid2 = ts.assign(self.geo1, "p2")
-        ts.endUpdate()
         ids = ts.getAssignmentIds(self.geo1)
         self.assertIsInstance(ids, list)
         self.assertIn(aid1, ids)
@@ -2257,9 +2156,7 @@ class TestAsciiRoundTrip(unittest.TestCase):
     def test_round_trip_scene_variables(self):
         # Write
         write_ctx = _make_ctx()
-        write_ctx.getSceneVariables().beginUpdate()
         write_ctx.getSceneVariables()["image_width"] = 1234
-        write_ctx.getSceneVariables().endUpdate()
 
         writer = rdl2.AsciiWriter(write_ctx)
         writer.setSkipDefaults(False)
@@ -2329,18 +2226,14 @@ class TestUserData(_WithDsos):
 
     def test_set_get_rate(self):
         ud = self._ud()
-        ud.beginUpdate()
         ud.setRate(rdl2.UserData.Rate.VERTEX)
-        ud.endUpdate()
         self.assertEqual(ud.getRate(), rdl2.UserData.Rate.VERTEX)
 
     def test_set_rate_roundtrip_all_values(self):
         ud = self._ud()
         for rate in (rdl2.UserData.Rate.AUTO, rdl2.UserData.Rate.CONSTANT,
                      rdl2.UserData.Rate.FACE_VARYING):
-            ud.beginUpdate()
             ud.setRate(rate)
-            ud.endUpdate()
             self.assertEqual(ud.getRate(), rate)
 
     # --- Bool channel -------------------------------------------------------
@@ -2351,9 +2244,7 @@ class TestUserData(_WithDsos):
 
     def test_set_get_bool_data(self):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_bool1").asUserData()
-        ud.beginUpdate()
         ud.setBoolData("my_bool", [True, False, True])
-        ud.endUpdate()
         self.assertTrue(ud.hasBoolData())
         self.assertEqual(ud.getBoolKey(), "my_bool")
         self.assertEqual(list(ud.getBoolValues()), [True, False, True])
@@ -2366,9 +2257,7 @@ class TestUserData(_WithDsos):
 
     def test_set_get_int_data(self):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_int1").asUserData()
-        ud.beginUpdate()
         ud.setIntData("my_int", [10, 20, 30])
-        ud.endUpdate()
         self.assertTrue(ud.hasIntData())
         self.assertEqual(ud.getIntKey(), "my_int")
         self.assertEqual(list(ud.getIntValues()), [10, 20, 30])
@@ -2381,9 +2270,7 @@ class TestUserData(_WithDsos):
 
     def test_set_get_float_data_single(self):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_flt1").asUserData()
-        ud.beginUpdate()
         ud.setFloatData("my_float", [1.0, 2.0, 3.0])
-        ud.endUpdate()
         self.assertTrue(ud.hasFloatData())
         self.assertTrue(ud.hasFloatData0())
         self.assertFalse(ud.hasFloatData1())
@@ -2395,9 +2282,7 @@ class TestUserData(_WithDsos):
 
     def test_set_get_float_data_blur(self):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_flt2").asUserData()
-        ud.beginUpdate()
         ud.setFloatData("blur_float", [1.0, 2.0], [3.0, 4.0])
-        ud.endUpdate()
         self.assertTrue(ud.hasFloatData())
         self.assertTrue(ud.hasFloatData0())
         self.assertTrue(ud.hasFloatData1())
@@ -2412,9 +2297,7 @@ class TestUserData(_WithDsos):
 
     def test_set_get_string_data(self):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_str1").asUserData()
-        ud.beginUpdate()
         ud.setStringData("my_str", ["hello", "world"])
-        ud.endUpdate()
         self.assertTrue(ud.hasStringData())
         self.assertEqual(ud.getStringKey(), "my_str")
         self.assertEqual(list(ud.getStringValues()), ["hello", "world"])
@@ -2429,9 +2312,7 @@ class TestUserData(_WithDsos):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_clr1").asUserData()
         c0 = rdl2.Rgb(1.0, 0.0, 0.0)
         c1 = rdl2.Rgb(0.0, 1.0, 0.0)
-        ud.beginUpdate()
         ud.setColorData("my_color", [c0, c1])
-        ud.endUpdate()
         self.assertTrue(ud.hasColorData())
         self.assertTrue(ud.hasColorData0())
         self.assertFalse(ud.hasColorData1())
@@ -2441,9 +2322,7 @@ class TestUserData(_WithDsos):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_clr2").asUserData()
         c0 = rdl2.Rgb(1.0, 0.0, 0.0)
         c1 = rdl2.Rgb(0.0, 1.0, 0.0)
-        ud.beginUpdate()
         ud.setColorData("blur_color", [c0], [c1])
-        ud.endUpdate()
         self.assertTrue(ud.hasColorData0())
         self.assertTrue(ud.hasColorData1())
         result0 = list(ud.getColorValues0())
@@ -2461,9 +2340,7 @@ class TestUserData(_WithDsos):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_v2f1").asUserData()
         v0 = rdl2.Vec2f(1.0, 2.0)
         v1 = rdl2.Vec2f(3.0, 4.0)
-        ud.beginUpdate()
         ud.setVec2fData("my_vec2f", [v0, v1])
-        ud.endUpdate()
         self.assertTrue(ud.hasVec2fData())
         self.assertEqual(ud.getVec2fKey(), "my_vec2f")
         vals = list(ud.getVec2fValues())
@@ -2474,9 +2351,7 @@ class TestUserData(_WithDsos):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_v2f2").asUserData()
         v0 = rdl2.Vec2f(1.0, 0.0)
         v1 = rdl2.Vec2f(0.0, 1.0)
-        ud.beginUpdate()
         ud.setVec2fData("blur_vec2f", [v0], [v1])
-        ud.endUpdate()
         self.assertTrue(ud.hasVec2fData0())
         self.assertTrue(ud.hasVec2fData1())
 
@@ -2489,9 +2364,7 @@ class TestUserData(_WithDsos):
     def test_set_get_vec3f_data_single(self):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_v3f1").asUserData()
         v = rdl2.Vec3f(1.0, 2.0, 3.0)
-        ud.beginUpdate()
         ud.setVec3fData("my_vec3f", [v])
-        ud.endUpdate()
         self.assertTrue(ud.hasVec3fData())
         self.assertEqual(ud.getVec3fKey(), "my_vec3f")
         vals = list(ud.getVec3fValues())
@@ -2501,9 +2374,7 @@ class TestUserData(_WithDsos):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_v3f2").asUserData()
         v0 = rdl2.Vec3f(1.0, 0.0, 0.0)
         v1 = rdl2.Vec3f(0.0, 0.0, 1.0)
-        ud.beginUpdate()
         ud.setVec3fData("blur_vec3f", [v0], [v1])
-        ud.endUpdate()
         self.assertTrue(ud.hasVec3fData0())
         self.assertTrue(ud.hasVec3fData1())
 
@@ -2516,9 +2387,7 @@ class TestUserData(_WithDsos):
     def test_set_get_mat4f_data_single(self):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_m4f1").asUserData()
         m = rdl2.Mat4f()
-        ud.beginUpdate()
         ud.setMat4fData("my_mat4f", [m])
-        ud.endUpdate()
         self.assertTrue(ud.hasMat4fData())
         self.assertTrue(ud.hasMat4fData0())
         self.assertFalse(ud.hasMat4fData1())
@@ -2528,9 +2397,7 @@ class TestUserData(_WithDsos):
         ud = self.ctx.createSceneObject("UserData", "/test/userdata/ud_m4f2").asUserData()
         m0 = rdl2.Mat4f()
         m1 = rdl2.Mat4f()
-        ud.beginUpdate()
         ud.setMat4fData("blur_mat4f", [m0], [m1])
-        ud.endUpdate()
         self.assertTrue(ud.hasMat4fData0())
         self.assertTrue(ud.hasMat4fData1())
 

@@ -25,25 +25,25 @@ void bind_layer(py::module_& m)
     // but we bind it directly under SceneObject for simplicity)
     // -----------------------------------------------------------------------
     py::class_<rdl2::Layer, rdl2::SceneObject>(m, "Layer")
-        .def("assign",
-             (int32_t (rdl2::Layer::*)(rdl2::Geometry*, const rdl2::String&,
-                                       rdl2::Material*, rdl2::LightSet*))
-             &rdl2::Layer::assign,
-             py::arg("geometry"), py::arg("part_name"),
-             py::arg("material"), py::arg("light_set"))
-        .def("assign",
-             (int32_t (rdl2::Layer::*)(rdl2::Geometry*, const rdl2::String&,
-                                       rdl2::Material*, rdl2::LightSet*,
-                                       rdl2::Displacement*, rdl2::VolumeShader*))
-             &rdl2::Layer::assign,
-             py::arg("geometry"), py::arg("part_name"),
-             py::arg("material"), py::arg("light_set"),
-             py::arg("displacement"), py::arg("volume_shader"))
-        .def("assign",
-             (int32_t (rdl2::Layer::*)(rdl2::Geometry*, const rdl2::String&,
-                                       const rdl2::LayerAssignment&))
-             &rdl2::Layer::assign,
-             py::arg("geometry"), py::arg("part_name"), py::arg("assignment"))
+        .def("assign", [](rdl2::Layer& self, rdl2::Geometry* g, const std::string& part,
+                          rdl2::Material* mat, rdl2::LightSet* ls) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            return self.assign(g, part, mat, ls);
+        }, py::arg("geometry"), py::arg("part_name"),
+           py::arg("material"), py::arg("light_set"))
+        .def("assign", [](rdl2::Layer& self, rdl2::Geometry* g, const std::string& part,
+                          rdl2::Material* mat, rdl2::LightSet* ls,
+                          rdl2::Displacement* disp, rdl2::VolumeShader* vs) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            return self.assign(g, part, mat, ls, disp, vs);
+        }, py::arg("geometry"), py::arg("part_name"),
+           py::arg("material"), py::arg("light_set"),
+           py::arg("displacement"), py::arg("volume_shader"))
+        .def("assign", [](rdl2::Layer& self, rdl2::Geometry* g, const std::string& part,
+                          const rdl2::LayerAssignment& a) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            return self.assign(g, part, a);
+        }, py::arg("geometry"), py::arg("part_name"), py::arg("assignment"))
         .def("lookupMaterial",         &rdl2::Layer::lookupMaterial,
              py::arg("assignment_id"), py::return_value_policy::reference)
         .def("lookupLightSet",         &rdl2::Layer::lookupLightSet,
@@ -58,6 +58,9 @@ void bind_layer(py::module_& m)
              py::arg("assignment_id"), py::return_value_policy::reference)
         .def("lookupShadowReceiverSet",&rdl2::Layer::lookupShadowReceiverSet,
              py::arg("assignment_id"), py::return_value_policy::reference)
-        .def("clear",            &rdl2::Layer::clear)
+        .def("clear", [](rdl2::Layer& self) {
+            rdl2::SceneObject::UpdateGuard guard(&self);
+            self.clear();
+        })
         .def("lightSetsChanged", &rdl2::Layer::lightSetsChanged);
 }
