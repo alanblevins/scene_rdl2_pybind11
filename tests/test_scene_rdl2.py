@@ -1622,6 +1622,126 @@ class TestRenderOutput(_WithDsos):
 
 
 # ===========================================================================
+# BinaryReader / BinaryWriter
+# ===========================================================================
+
+class TestBinaryWriter(unittest.TestCase):
+    def setUp(self):
+        self.ctx = _make_ctx()
+
+    def test_construction(self):
+        self.assertIsInstance(rdl2.BinaryWriter(self.ctx), rdl2.BinaryWriter)
+
+    def test_set_transient_encoding(self):
+        w = rdl2.BinaryWriter(self.ctx)
+        w.setTransientEncoding(True)
+        w.setTransientEncoding(False)
+
+    def test_set_delta_encoding(self):
+        w = rdl2.BinaryWriter(self.ctx)
+        w.setDeltaEncoding(True)
+        w.setDeltaEncoding(False)
+
+    def test_set_skip_defaults(self):
+        w = rdl2.BinaryWriter(self.ctx)
+        w.setSkipDefaults(True)
+        w.setSkipDefaults(False)
+
+    def test_split_mode(self):
+        w = rdl2.BinaryWriter(self.ctx)
+        w.setSplitMode(100)
+        w.clearSplitMode()
+
+    def test_to_bytes_returns_tuple_of_bytes(self):
+        manifest, payload = rdl2.BinaryWriter(self.ctx).toBytes()
+        self.assertIsInstance(manifest, bytes)
+        self.assertIsInstance(payload, bytes)
+
+    def test_to_bytes_non_empty(self):
+        manifest, payload = rdl2.BinaryWriter(self.ctx).toBytes()
+        self.assertGreater(len(manifest) + len(payload), 0)
+
+    def test_to_file(self):
+        w = rdl2.BinaryWriter(self.ctx)
+        with tempfile.NamedTemporaryFile(suffix=".rdlb", delete=False) as f:
+            tmp_path = f.name
+        try:
+            w.toFile(tmp_path)
+            self.assertTrue(os.path.exists(tmp_path))
+            self.assertGreater(os.path.getsize(tmp_path), 0)
+        finally:
+            os.unlink(tmp_path)
+
+    def test_show_returns_str(self):
+        s = rdl2.BinaryWriter(self.ctx).show("", False)
+        self.assertIsInstance(s, str)
+
+
+class TestBinaryReader(unittest.TestCase):
+    def setUp(self):
+        self.ctx = _make_ctx()
+
+    def test_construction(self):
+        self.assertIsInstance(rdl2.BinaryReader(self.ctx), rdl2.BinaryReader)
+
+    def test_set_warnings_as_errors(self):
+        r = rdl2.BinaryReader(self.ctx)
+        r.setWarningsAsErrors(True)
+        r.setWarningsAsErrors(False)
+
+    def test_show_manifest_returns_str(self):
+        # Write a minimal context and extract the manifest bytes
+        manifest, _ = rdl2.BinaryWriter(self.ctx).toBytes()
+        s = rdl2.BinaryReader.showManifest(manifest)
+        self.assertIsInstance(s, str)
+
+
+class TestBinaryRoundTrip(unittest.TestCase):
+    def test_round_trip_scene_variables(self):
+        write_ctx = _make_ctx()
+        write_ctx.getSceneVariables().beginUpdate()
+        write_ctx.getSceneVariables()["image_width"] = 5678
+        write_ctx.getSceneVariables().endUpdate()
+
+        writer = rdl2.BinaryWriter(write_ctx)
+        writer.setSkipDefaults(False)
+        manifest, payload = writer.toBytes()
+
+        read_ctx = _make_ctx()
+        rdl2.BinaryReader(read_ctx).fromBytes(manifest, payload)
+        self.assertEqual(read_ctx.getSceneVariables()["image_width"], 5678)
+
+    def test_round_trip_to_file(self):
+        write_ctx = _make_ctx(load_dsos=True)
+        write_ctx.createSceneObject("RenderOutput", "/test/bin/ro")
+
+        writer = rdl2.BinaryWriter(write_ctx)
+        with tempfile.NamedTemporaryFile(suffix=".rdlb", delete=False) as f:
+            tmp_path = f.name
+        try:
+            writer.toFile(tmp_path)
+            read_ctx = _make_ctx(load_dsos=True)
+            rdl2.BinaryReader(read_ctx).fromFile(tmp_path)
+            self.assertTrue(read_ctx.sceneObjectExists("/test/bin/ro"))
+        finally:
+            os.unlink(tmp_path)
+
+    def test_round_trip_with_delta_encoding(self):
+        write_ctx = _make_ctx()
+        write_ctx.getSceneVariables().beginUpdate()
+        write_ctx.getSceneVariables()["image_height"] = 720
+        write_ctx.getSceneVariables().endUpdate()
+
+        writer = rdl2.BinaryWriter(write_ctx)
+        writer.setDeltaEncoding(True)
+        manifest, payload = writer.toBytes()
+
+        read_ctx = _make_ctx()
+        rdl2.BinaryReader(read_ctx).fromBytes(manifest, payload)
+        self.assertEqual(read_ctx.getSceneVariables()["image_height"], 720)
+
+
+# ===========================================================================
 # AsciiReader / AsciiWriter
 # ===========================================================================
 

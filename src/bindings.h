@@ -41,6 +41,8 @@
 #include <scene_rdl2/scene/rdl2/UserData.h>
 #include <scene_rdl2/scene/rdl2/AsciiReader.h>
 #include <scene_rdl2/scene/rdl2/AsciiWriter.h>
+#include <scene_rdl2/scene/rdl2/BinaryReader.h>
+#include <scene_rdl2/scene/rdl2/BinaryWriter.h>
 
 // SceneObject and all its subclasses declare their copy constructors as
 // private and leave them undefined (the C++03 non-copyable idiom, without
