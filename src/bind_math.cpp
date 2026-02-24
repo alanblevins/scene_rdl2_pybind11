@@ -6,18 +6,52 @@
 
 #include "bindings.h"
 
+// ---------------------------------------------------------------------------
+// Helpers: build a Vec4f / Vec4d from a Python object (Vec4* or sequence)
+// ---------------------------------------------------------------------------
+static rdl2::Vec4f to_vec4f(py::object h)
+{
+    if (py::isinstance<rdl2::Vec4f>(h))
+        return h.cast<rdl2::Vec4f>();
+    py::sequence s(h);
+    if (py::len(s) != 4)
+        throw py::value_error("each row must have 4 elements");
+    return rdl2::Vec4f(s[0].cast<float>(), s[1].cast<float>(),
+                       s[2].cast<float>(), s[3].cast<float>());
+}
+
+static rdl2::Vec4d to_vec4d(py::object h)
+{
+    if (py::isinstance<rdl2::Vec4d>(h))
+        return h.cast<rdl2::Vec4d>();
+    py::sequence s(h);
+    if (py::len(s) != 4)
+        throw py::value_error("each row must have 4 elements");
+    return rdl2::Vec4d(s[0].cast<double>(), s[1].cast<double>(),
+                       s[2].cast<double>(), s[3].cast<double>());
+}
+
 void bind_math(py::module_& m)
 {
+    // -----------------------------------------------------------------------
     // Rgb (Col3f): r, g, b
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Rgb>(m, "Rgb")
         .def(py::init<>())
         .def(py::init<float>(), py::arg("v"))
         .def(py::init<float, float, float>(), py::arg("r"), py::arg("g"), py::arg("b"))
+        .def(py::init([](py::sequence s) {
+            if (py::len(s) != 3)
+                throw py::value_error("Rgb requires 3 elements, got " +
+                                      std::to_string(py::len(s)));
+            return rdl2::Rgb(s[0].cast<float>(), s[1].cast<float>(), s[2].cast<float>());
+        }), py::arg("s"))
         .def_readwrite("r", &rdl2::Rgb::r)
         .def_readwrite("g", &rdl2::Rgb::g)
         .def_readwrite("b", &rdl2::Rgb::b)
         .def("__repr__", [](const rdl2::Rgb& c) {
-            return "Rgb(" + std::to_string(c.r) + ", " + std::to_string(c.g) + ", " + std::to_string(c.b) + ")";
+            return "Rgb(" + std::to_string(c.r) + ", " +
+                   std::to_string(c.g) + ", " + std::to_string(c.b) + ")";
         })
         .def("__eq__", [](const rdl2::Rgb& a, const rdl2::Rgb& b) {
             return a.r == b.r && a.g == b.g && a.b == b.b;
@@ -25,28 +59,51 @@ void bind_math(py::module_& m)
         .def("__iter__", [](const rdl2::Rgb& c) {
             return py::iter(py::make_tuple(c.r, c.g, c.b));
         });
+    py::implicitly_convertible<py::list,  rdl2::Rgb>();
+    py::implicitly_convertible<py::tuple, rdl2::Rgb>();
 
+    // -----------------------------------------------------------------------
     // Rgba (Col4f): r, g, b, a
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Rgba>(m, "Rgba")
         .def(py::init<>())
         .def(py::init<float>(), py::arg("v"))
-        .def(py::init<float, float, float, float>(), py::arg("r"), py::arg("g"), py::arg("b"), py::arg("a"))
+        .def(py::init<float, float, float, float>(),
+             py::arg("r"), py::arg("g"), py::arg("b"), py::arg("a"))
+        .def(py::init([](py::sequence s) {
+            if (py::len(s) != 4)
+                throw py::value_error("Rgba requires 4 elements, got " +
+                                      std::to_string(py::len(s)));
+            return rdl2::Rgba(s[0].cast<float>(), s[1].cast<float>(),
+                              s[2].cast<float>(), s[3].cast<float>());
+        }), py::arg("s"))
         .def_readwrite("r", &rdl2::Rgba::r)
         .def_readwrite("g", &rdl2::Rgba::g)
         .def_readwrite("b", &rdl2::Rgba::b)
         .def_readwrite("a", &rdl2::Rgba::a)
         .def("__repr__", [](const rdl2::Rgba& c) {
-            return "Rgba(" + std::to_string(c.r) + ", " + std::to_string(c.g) + ", " + std::to_string(c.b) + ", " + std::to_string(c.a) + ")";
+            return "Rgba(" + std::to_string(c.r) + ", " + std::to_string(c.g) +
+                   ", " + std::to_string(c.b) + ", " + std::to_string(c.a) + ")";
         })
         .def("__eq__", [](const rdl2::Rgba& a, const rdl2::Rgba& b) {
             return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
         });
+    py::implicitly_convertible<py::list,  rdl2::Rgba>();
+    py::implicitly_convertible<py::tuple, rdl2::Rgba>();
 
+    // -----------------------------------------------------------------------
     // Vec2f
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Vec2f>(m, "Vec2f")
         .def(py::init<>())
         .def(py::init<float>(), py::arg("v"))
         .def(py::init<float, float>(), py::arg("x"), py::arg("y"))
+        .def(py::init([](py::sequence s) {
+            if (py::len(s) != 2)
+                throw py::value_error("Vec2f requires 2 elements, got " +
+                                      std::to_string(py::len(s)));
+            return rdl2::Vec2f(s[0].cast<float>(), s[1].cast<float>());
+        }), py::arg("s"))
         .def_readwrite("x", &rdl2::Vec2f::x)
         .def_readwrite("y", &rdl2::Vec2f::y)
         .def("__repr__", [](const rdl2::Vec2f& v) {
@@ -55,28 +112,49 @@ void bind_math(py::module_& m)
         .def("__eq__", [](const rdl2::Vec2f& a, const rdl2::Vec2f& b) {
             return a.x == b.x && a.y == b.y;
         });
+    py::implicitly_convertible<py::list,  rdl2::Vec2f>();
+    py::implicitly_convertible<py::tuple, rdl2::Vec2f>();
 
+    // -----------------------------------------------------------------------
     // Vec2d
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Vec2d>(m, "Vec2d")
         .def(py::init<>())
         .def(py::init<double>(), py::arg("v"))
         .def(py::init<double, double>(), py::arg("x"), py::arg("y"))
+        .def(py::init([](py::sequence s) {
+            if (py::len(s) != 2)
+                throw py::value_error("Vec2d requires 2 elements, got " +
+                                      std::to_string(py::len(s)));
+            return rdl2::Vec2d(s[0].cast<double>(), s[1].cast<double>());
+        }), py::arg("s"))
         .def_readwrite("x", &rdl2::Vec2d::x)
         .def_readwrite("y", &rdl2::Vec2d::y)
         .def("__repr__", [](const rdl2::Vec2d& v) {
             return "Vec2d(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ")";
         });
+    py::implicitly_convertible<py::list,  rdl2::Vec2d>();
+    py::implicitly_convertible<py::tuple, rdl2::Vec2d>();
 
+    // -----------------------------------------------------------------------
     // Vec3f
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Vec3f>(m, "Vec3f")
         .def(py::init<>())
         .def(py::init<float>(), py::arg("v"))
         .def(py::init<float, float, float>(), py::arg("x"), py::arg("y"), py::arg("z"))
+        .def(py::init([](py::sequence s) {
+            if (py::len(s) != 3)
+                throw py::value_error("Vec3f requires 3 elements, got " +
+                                      std::to_string(py::len(s)));
+            return rdl2::Vec3f(s[0].cast<float>(), s[1].cast<float>(), s[2].cast<float>());
+        }), py::arg("s"))
         .def_readwrite("x", &rdl2::Vec3f::x)
         .def_readwrite("y", &rdl2::Vec3f::y)
         .def_readwrite("z", &rdl2::Vec3f::z)
         .def("__repr__", [](const rdl2::Vec3f& v) {
-            return "Vec3f(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
+            return "Vec3f(" + std::to_string(v.x) + ", " +
+                   std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
         })
         .def("__eq__", [](const rdl2::Vec3f& a, const rdl2::Vec3f& b) {
             return a.x == b.x && a.y == b.y && a.z == b.z;
@@ -84,50 +162,100 @@ void bind_math(py::module_& m)
         .def("__iter__", [](const rdl2::Vec3f& v) {
             return py::iter(py::make_tuple(v.x, v.y, v.z));
         });
+    py::implicitly_convertible<py::list,  rdl2::Vec3f>();
+    py::implicitly_convertible<py::tuple, rdl2::Vec3f>();
 
+    // -----------------------------------------------------------------------
     // Vec3d
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Vec3d>(m, "Vec3d")
         .def(py::init<>())
         .def(py::init<double>(), py::arg("v"))
         .def(py::init<double, double, double>(), py::arg("x"), py::arg("y"), py::arg("z"))
+        .def(py::init([](py::sequence s) {
+            if (py::len(s) != 3)
+                throw py::value_error("Vec3d requires 3 elements, got " +
+                                      std::to_string(py::len(s)));
+            return rdl2::Vec3d(s[0].cast<double>(), s[1].cast<double>(), s[2].cast<double>());
+        }), py::arg("s"))
         .def_readwrite("x", &rdl2::Vec3d::x)
         .def_readwrite("y", &rdl2::Vec3d::y)
         .def_readwrite("z", &rdl2::Vec3d::z)
         .def("__repr__", [](const rdl2::Vec3d& v) {
-            return "Vec3d(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
+            return "Vec3d(" + std::to_string(v.x) + ", " +
+                   std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
         });
+    py::implicitly_convertible<py::list,  rdl2::Vec3d>();
+    py::implicitly_convertible<py::tuple, rdl2::Vec3d>();
 
+    // -----------------------------------------------------------------------
     // Vec4f
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Vec4f>(m, "Vec4f")
         .def(py::init<>())
         .def(py::init<float>(), py::arg("v"))
-        .def(py::init<float, float, float, float>(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("w"))
+        .def(py::init<float, float, float, float>(),
+             py::arg("x"), py::arg("y"), py::arg("z"), py::arg("w"))
+        .def(py::init([](py::sequence s) {
+            if (py::len(s) != 4)
+                throw py::value_error("Vec4f requires 4 elements, got " +
+                                      std::to_string(py::len(s)));
+            return rdl2::Vec4f(s[0].cast<float>(), s[1].cast<float>(),
+                               s[2].cast<float>(), s[3].cast<float>());
+        }), py::arg("s"))
         .def_readwrite("x", &rdl2::Vec4f::x)
         .def_readwrite("y", &rdl2::Vec4f::y)
         .def_readwrite("z", &rdl2::Vec4f::z)
         .def_readwrite("w", &rdl2::Vec4f::w)
         .def("__repr__", [](const rdl2::Vec4f& v) {
-            return "Vec4f(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ", " + std::to_string(v.w) + ")";
+            return "Vec4f(" + std::to_string(v.x) + ", " + std::to_string(v.y) +
+                   ", " + std::to_string(v.z) + ", " + std::to_string(v.w) + ")";
         });
+    py::implicitly_convertible<py::list,  rdl2::Vec4f>();
+    py::implicitly_convertible<py::tuple, rdl2::Vec4f>();
 
+    // -----------------------------------------------------------------------
     // Vec4d
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Vec4d>(m, "Vec4d")
         .def(py::init<>())
         .def(py::init<double>(), py::arg("v"))
-        .def(py::init<double, double, double, double>(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("w"))
+        .def(py::init<double, double, double, double>(),
+             py::arg("x"), py::arg("y"), py::arg("z"), py::arg("w"))
+        .def(py::init([](py::sequence s) {
+            if (py::len(s) != 4)
+                throw py::value_error("Vec4d requires 4 elements, got " +
+                                      std::to_string(py::len(s)));
+            return rdl2::Vec4d(s[0].cast<double>(), s[1].cast<double>(),
+                               s[2].cast<double>(), s[3].cast<double>());
+        }), py::arg("s"))
         .def_readwrite("x", &rdl2::Vec4d::x)
         .def_readwrite("y", &rdl2::Vec4d::y)
         .def_readwrite("z", &rdl2::Vec4d::z)
         .def_readwrite("w", &rdl2::Vec4d::w)
         .def("__repr__", [](const rdl2::Vec4d& v) {
-            return "Vec4d(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ", " + std::to_string(v.w) + ")";
+            return "Vec4d(" + std::to_string(v.x) + ", " + std::to_string(v.y) +
+                   ", " + std::to_string(v.z) + ", " + std::to_string(v.w) + ")";
         });
+    py::implicitly_convertible<py::list,  rdl2::Vec4d>();
+    py::implicitly_convertible<py::tuple, rdl2::Vec4d>();
 
+    // -----------------------------------------------------------------------
     // Mat4f (vx, vy, vz, vw are Vec4f rows)
+    // Accepts: Mat4f(Vec4f, Vec4f, Vec4f, Vec4f)
+    //          Mat4f([[r,r,r,r], [r,r,r,r], [r,r,r,r], [r,r,r,r]])
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Mat4f>(m, "Mat4f")
         .def(py::init<>())
         .def(py::init<rdl2::Vec4f, rdl2::Vec4f, rdl2::Vec4f, rdl2::Vec4f>(),
              py::arg("vx"), py::arg("vy"), py::arg("vz"), py::arg("vw"))
+        .def(py::init([](py::sequence rows) {
+            if (py::len(rows) != 4)
+                throw py::value_error("Mat4f requires 4 rows, got " +
+                                      std::to_string(py::len(rows)));
+            return rdl2::Mat4f(to_vec4f(rows[0]), to_vec4f(rows[1]),
+                               to_vec4f(rows[2]), to_vec4f(rows[3]));
+        }), py::arg("rows"))
         .def_readwrite("vx", &rdl2::Mat4f::vx)
         .def_readwrite("vy", &rdl2::Mat4f::vy)
         .def_readwrite("vz", &rdl2::Mat4f::vz)
@@ -136,12 +264,23 @@ void bind_math(py::module_& m)
             return "Mat4f([" + std::to_string(m.vx.x) + ", " + std::to_string(m.vx.y) +
                    ", " + std::to_string(m.vx.z) + ", " + std::to_string(m.vx.w) + "], ...)";
         });
+    py::implicitly_convertible<py::list,  rdl2::Mat4f>();
+    py::implicitly_convertible<py::tuple, rdl2::Mat4f>();
 
+    // -----------------------------------------------------------------------
     // Mat4d (vx, vy, vz, vw are Vec4d rows)
+    // -----------------------------------------------------------------------
     py::class_<rdl2::Mat4d>(m, "Mat4d")
         .def(py::init<>())
         .def(py::init<rdl2::Vec4d, rdl2::Vec4d, rdl2::Vec4d, rdl2::Vec4d>(),
              py::arg("vx"), py::arg("vy"), py::arg("vz"), py::arg("vw"))
+        .def(py::init([](py::sequence rows) {
+            if (py::len(rows) != 4)
+                throw py::value_error("Mat4d requires 4 rows, got " +
+                                      std::to_string(py::len(rows)));
+            return rdl2::Mat4d(to_vec4d(rows[0]), to_vec4d(rows[1]),
+                               to_vec4d(rows[2]), to_vec4d(rows[3]));
+        }), py::arg("rows"))
         .def_readwrite("vx", &rdl2::Mat4d::vx)
         .def_readwrite("vy", &rdl2::Mat4d::vy)
         .def_readwrite("vz", &rdl2::Mat4d::vz)
@@ -150,4 +289,6 @@ void bind_math(py::module_& m)
             return "Mat4d([" + std::to_string(m.vx.x) + ", " + std::to_string(m.vx.y) +
                    ", " + std::to_string(m.vx.z) + ", " + std::to_string(m.vx.w) + "], ...)";
         });
+    py::implicitly_convertible<py::list,  rdl2::Mat4d>();
+    py::implicitly_convertible<py::tuple, rdl2::Mat4d>();
 }
