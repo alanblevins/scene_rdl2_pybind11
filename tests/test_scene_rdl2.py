@@ -29,6 +29,7 @@ if os.path.isdir(_BUILD):
 import scene_rdl2 as rdl2
 
 DSO_PATH = "/Applications/MoonRay/installs/openmoonray/rdl2dso"
+_FIXTURE_DIR = os.path.join(_HERE, "fixtures")
 
 
 # ---------------------------------------------------------------------------
@@ -1741,6 +1742,230 @@ class TestBinaryRoundTrip(unittest.TestCase):
         read_ctx = _make_ctx()
         rdl2.BinaryReader(read_ctx).fromBytes(manifest, payload)
         self.assertEqual(read_ctx.getSceneVariables()["image_height"], 720)
+
+
+# ===========================================================================
+# File persistence — write .rdla / .rdlb to tests/fixtures/, read back
+# ===========================================================================
+
+class TestRdlaFilePersistence(unittest.TestCase):
+    """
+    Writes a populated scene to tests/fixtures/test_scene.rdla in setUpClass,
+    then verifies reading it back produces the expected content.
+    The fixture file is left on disk for manual inspection between runs.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        os.makedirs(_FIXTURE_DIR, exist_ok=True)
+        cls.rdla_path = os.path.join(_FIXTURE_DIR, "test_scene.rdla")
+
+        # Build a scene with known, non-default content
+        write_ctx = _make_ctx(load_dsos=True)
+        sv = write_ctx.getSceneVariables()
+        sv.beginUpdate()
+        sv["image_width"]  = 1280
+        sv["image_height"] = 720
+        sv["frame"]        = 12.5
+        sv.endUpdate()
+
+        write_ctx.createSceneObject("RenderOutput", "/fixtures/ro")
+
+        md = write_ctx.createSceneObject("Metadata", "/fixtures/meta").asMetadata()
+        md.beginUpdate()
+        md.setAttributes(["title", "author"],
+                         ["string", "string"],
+                         ["test scene", "rdl2py"])
+        md.endUpdate()
+
+        rdl2.AsciiWriter(write_ctx).toFile(cls.rdla_path)
+
+        # Pre-read into two contexts so individual tests don't pay the DSO-load cost
+        cls.ctx_sv = _make_ctx()
+        rdl2.AsciiReader(cls.ctx_sv).fromFile(cls.rdla_path)
+
+        cls.ctx_full = _make_ctx(load_dsos=True)
+        rdl2.AsciiReader(cls.ctx_full).fromFile(cls.rdla_path)
+
+    # --- file-level checks --------------------------------------------------
+
+    def test_file_exists(self):
+        self.assertTrue(os.path.exists(self.rdla_path))
+
+    def test_file_has_rdla_extension(self):
+        self.assertTrue(self.rdla_path.endswith(".rdla"))
+
+    def test_file_is_non_empty(self):
+        self.assertGreater(os.path.getsize(self.rdla_path), 0)
+
+    def test_file_is_text(self):
+        with open(self.rdla_path) as f:
+            text = f.read()
+        self.assertIsInstance(text, str)
+
+    def test_file_contains_scene_variables_marker(self):
+        with open(self.rdla_path) as f:
+            text = f.read()
+        self.assertIn("SceneVariables", text)
+
+    def test_file_contains_render_output_marker(self):
+        with open(self.rdla_path) as f:
+            text = f.read()
+        self.assertIn("RenderOutput", text)
+
+    # --- SceneVariables read-back -------------------------------------------
+
+    def test_read_image_width(self):
+        self.assertEqual(self.ctx_sv.getSceneVariables()["image_width"], 1280)
+
+    def test_read_image_height(self):
+        self.assertEqual(self.ctx_sv.getSceneVariables()["image_height"], 720)
+
+    def test_read_frame(self):
+        self.assertAlmostEqual(self.ctx_sv.getSceneVariables()["frame"], 12.5)
+
+    # --- object existence read-back -----------------------------------------
+
+    def test_render_output_exists(self):
+        self.assertTrue(self.ctx_full.sceneObjectExists("/fixtures/ro"))
+
+    def test_metadata_exists(self):
+        self.assertTrue(self.ctx_full.sceneObjectExists("/fixtures/meta"))
+
+    # --- object content read-back -------------------------------------------
+
+    def test_metadata_attribute_names(self):
+        md = self.ctx_full.getSceneObject("/fixtures/meta").asMetadata()
+        self.assertIsNotNone(md)
+        names = md.getAttributeNames()
+        self.assertIn("title", names)
+        self.assertIn("author", names)
+
+    def test_metadata_attribute_values(self):
+        md = self.ctx_full.getSceneObject("/fixtures/meta").asMetadata()
+        values = md.getAttributeValues()
+        self.assertIn("test scene", values)
+        self.assertIn("rdl2py", values)
+
+    def test_metadata_attribute_types(self):
+        md = self.ctx_full.getSceneObject("/fixtures/meta").asMetadata()
+        types = md.getAttributeTypes()
+        self.assertEqual(types.count("string"), 2)
+
+    # --- independent second read --------------------------------------------
+
+    def test_read_into_fresh_context_agrees(self):
+        ctx2 = _make_ctx()
+        rdl2.AsciiReader(ctx2).fromFile(self.rdla_path)
+        self.assertEqual(ctx2.getSceneVariables()["image_width"], 1280)
+        self.assertEqual(ctx2.getSceneVariables()["image_height"], 720)
+
+
+class TestRdlbFilePersistence(unittest.TestCase):
+    """
+    Writes a populated scene to tests/fixtures/test_scene.rdlb in setUpClass,
+    then verifies reading it back (via fromFile) produces the expected content.
+    Also exercises the manifest/payload split exposed through the Python API.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        os.makedirs(_FIXTURE_DIR, exist_ok=True)
+        cls.rdlb_path = os.path.join(_FIXTURE_DIR, "test_scene.rdlb")
+
+        # Build a scene with known, non-default content
+        write_ctx = _make_ctx(load_dsos=True)
+        sv = write_ctx.getSceneVariables()
+        sv.beginUpdate()
+        sv["image_width"]  = 1280
+        sv["image_height"] = 720
+        sv["frame"]        = 12.5
+        sv.endUpdate()
+
+        write_ctx.createSceneObject("RenderOutput", "/fixtures/ro")
+
+        ud = write_ctx.createSceneObject("UserData", "/fixtures/ud").asUserData()
+        ud.beginUpdate()
+        ud.setRate(rdl2.UserData.Rate.VERTEX)
+        ud.setFloatData("Cd", [0.1, 0.2, 0.3, 0.4])
+        ud.endUpdate()
+
+        writer = rdl2.BinaryWriter(write_ctx)
+        writer.setSkipDefaults(False)
+        writer.toFile(cls.rdlb_path)
+
+        # Pre-read into two contexts
+        cls.ctx_sv = _make_ctx()
+        rdl2.BinaryReader(cls.ctx_sv).fromFile(cls.rdlb_path)
+
+        cls.ctx_full = _make_ctx(load_dsos=True)
+        rdl2.BinaryReader(cls.ctx_full).fromFile(cls.rdlb_path)
+
+    # --- file-level checks --------------------------------------------------
+
+    def test_file_exists(self):
+        self.assertTrue(os.path.exists(self.rdlb_path))
+
+    def test_file_has_rdlb_extension(self):
+        self.assertTrue(self.rdlb_path.endswith(".rdlb"))
+
+    def test_file_is_non_empty(self):
+        self.assertGreater(os.path.getsize(self.rdlb_path), 0)
+
+    # --- SceneVariables read-back -------------------------------------------
+
+    def test_read_image_width(self):
+        self.assertEqual(self.ctx_sv.getSceneVariables()["image_width"], 1280)
+
+    def test_read_image_height(self):
+        self.assertEqual(self.ctx_sv.getSceneVariables()["image_height"], 720)
+
+    def test_read_frame(self):
+        self.assertAlmostEqual(self.ctx_sv.getSceneVariables()["frame"], 12.5)
+
+    # --- object existence read-back -----------------------------------------
+
+    def test_render_output_exists(self):
+        self.assertTrue(self.ctx_full.sceneObjectExists("/fixtures/ro"))
+
+    def test_user_data_exists(self):
+        self.assertTrue(self.ctx_full.sceneObjectExists("/fixtures/ud"))
+
+    # --- UserData content read-back -----------------------------------------
+
+    def test_user_data_float_key(self):
+        ud = self.ctx_full.getSceneObject("/fixtures/ud").asUserData()
+        self.assertIsNotNone(ud)
+        self.assertEqual(ud.getFloatKey(), "Cd")
+
+    def test_user_data_float_values(self):
+        ud = self.ctx_full.getSceneObject("/fixtures/ud").asUserData()
+        vals = list(ud.getFloatValues())
+        self.assertEqual(len(vals), 4)
+        self.assertAlmostEqual(vals[0], 0.1, places=5)
+        self.assertAlmostEqual(vals[1], 0.2, places=5)
+        self.assertAlmostEqual(vals[2], 0.3, places=5)
+        self.assertAlmostEqual(vals[3], 0.4, places=5)
+
+    def test_user_data_rate(self):
+        ud = self.ctx_full.getSceneObject("/fixtures/ud").asUserData()
+        self.assertEqual(ud.getRate(), rdl2.UserData.Rate.VERTEX)
+
+    # --- manifest inspection via the API ------------------------------------
+
+    def test_show_manifest_returns_str(self):
+        # Round-trip through toBytes() to get the manifest for showManifest()
+        manifest, _ = rdl2.BinaryWriter(self.ctx_sv).toBytes()
+        result = rdl2.BinaryReader.showManifest(manifest)
+        self.assertIsInstance(result, str)
+
+    # --- independent second read --------------------------------------------
+
+    def test_read_into_fresh_context_agrees(self):
+        ctx2 = _make_ctx()
+        rdl2.BinaryReader(ctx2).fromFile(self.rdlb_path)
+        self.assertEqual(ctx2.getSceneVariables()["image_width"], 1280)
+        self.assertEqual(ctx2.getSceneVariables()["image_height"], 720)
 
 
 # ===========================================================================

@@ -54,3 +54,6 @@ Thumbs.db
 
 # Clang cache
 .cache/
+
+# Generated test fixture files (created by the test suite at run-time)
+tests/fixtures/
