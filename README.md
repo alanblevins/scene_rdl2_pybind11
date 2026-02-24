@@ -18,20 +18,28 @@ cmake .. \
   -DPython3_EXECUTABLE=/opt/homebrew/bin/python3.13 \
   -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3.13 \
   -DPython3_FIND_STRATEGY=LOCATION
-make
+cd .. && cmake --build build --parallel
 ```
 
-The built module lands at `build/scene_rdl2/scene_rdl2.cpython-313-darwin.so`.
+The built module lands at `build/scene_rdl2.cpython-313-darwin.so`.
 
 ### VSCode
 
-Open the project folder and use **Cmd+Shift+B** to build (runs CMake configure + build). The integrated terminal automatically has `PYTHONPATH` and `DYLD_LIBRARY_PATH` set correctly. Press **F5** to debug `test_bindings.py`.
+Open the project folder and use **Cmd+Shift+B** to build (runs CMake configure + build). The integrated terminal automatically has `PYTHONPATH` and `DYLD_LIBRARY_PATH` set correctly.
+
+## Running the tests
+
+```bash
+python3.13 -m unittest discover tests/ -v
+```
+
+The suite writes fixture files to `tests/fixtures/` (gitignored) on first run.
 
 ## Usage
 
 ```python
 import sys
-sys.path.insert(0, 'build/scene_rdl2')
+sys.path.insert(0, 'build')
 import scene_rdl2 as rdl2
 ```
 
@@ -39,15 +47,20 @@ import scene_rdl2 as rdl2
 
 ```python
 ctx = rdl2.SceneContext()
+ctx.setDsoPath('/Applications/MoonRay/installs/openmoonray/rdl2dso')
 sv  = ctx.getSceneVariables()
 
-# Read an attribute
-print(sv.get('min_frame'))   # 0.0
+# Read an attribute using dict-style access
+print(sv['frame'])          # 0.0
 
-# Write attributes inside an UpdateGuard
+# Write attributes inside an update guard
 with rdl2.UpdateGuard(sv):
-    sv.set('min_frame', 1.0)
-    sv.set('max_frame', 48.0)
+    sv['image_width']  = 1920
+    sv['image_height'] = 1080
+    sv['frame']        = 12.5
+
+# Access a blur (motion-blur) sample at a specific timestep
+sv['frame', rdl2.TIMESTEP_END]
 ```
 
 ### Attribute introspection
@@ -61,9 +74,9 @@ for a in attrs[:5]:
           'bindable' if a.getFlags() & rdl2.FLAGS_BINDABLE else '')
 
 # Lookup a specific attribute
-a = sc.getAttribute('min_frame')
-print(a.getType())          # AttributeType.TYPE_FLOAT
-print(a.getDefaultValue())  # 0.0  (via SceneObject.get with default timestep)
+a = sc.getAttribute('frame')
+print(a.getType())           # AttributeType.TYPE_FLOAT
+print(a.getDefaultValue())   # 0.0
 ```
 
 ### Iterating the scene
@@ -86,7 +99,9 @@ SceneObject
 ├── Node
 │   ├── Camera
 │   ├── Geometry
-│   └── Light
+│   ├── EnvMap
+│   └── Joint
+├── Light
 ├── Shader
 │   └── RootShader
 │       ├── Material
@@ -94,30 +109,68 @@ SceneObject
 │       └── VolumeShader
 ├── Map / NormalMap  (via Shader)
 ├── GeometrySet
+│   └── ShadowReceiverSet
 ├── LightSet
+│   └── ShadowSet
+├── LightFilter
+├── LightFilterSet
+├── DisplayFilter
 ├── Layer
-└── RenderOutput
+├── RenderOutput
+├── Metadata
+├── TraceSet
+└── UserData
 ```
 
-`isA()` takes a `SceneObjectInterface` enum value:
+`isA()` tests against a `SceneObjectInterface` flag; convenience predicates are also available:
 
 ```python
-obj.isA(rdl2.INTERFACE_CAMERA)    # False
-obj.isA(rdl2.INTERFACE_GENERIC)   # True
+obj.isA(rdl2.INTERFACE_CAMERA)   # via interface bitmask
+obj.isCamera()                   # convenience predicate
+obj.isGeometry()
+obj.isUserData()
+# … and so on for every concrete type
+
+cam = obj.asCamera()             # returns Camera* or None
 ```
 
-### Loading a scene file
+### Loading and writing scene files
+
+**ASCII (.rdla)**
 
 ```python
-reader = rdl2.AsciiReader(ctx)
-reader.fromFile('/path/to/scene.rdla')
-```
-
-### Writing a scene file
-
-```python
+# Write
 writer = rdl2.AsciiWriter(ctx)
-writer.toFile('/path/to/out.rdla')
+writer.setSkipDefaults(True)     # omit attributes that equal their default
+writer.toFile('scene.rdla')
+rdla_str = writer.toString()     # write to an in-memory string instead
+
+# Read
+reader = rdl2.AsciiReader(ctx)
+reader.fromFile('scene.rdla')
+reader.fromString(rdla_str)
+```
+
+**Binary (.rdlb)**
+
+```python
+# Write to file
+writer = rdl2.BinaryWriter(ctx)
+writer.setSkipDefaults(False)
+writer.setDeltaEncoding(True)    # encode only values that changed
+writer.toFile('scene.rdlb')
+
+# Write to in-memory bytes (manifest, payload)
+manifest, payload = writer.toBytes()
+
+# Read from file
+rdl2.BinaryReader(ctx).fromFile('scene.rdlb')
+
+# Read from in-memory bytes
+rdl2.BinaryReader(ctx).fromBytes(manifest, payload)
+
+# Inspect manifest without a context
+print(rdl2.BinaryReader.showManifest(manifest))
 ```
 
 ### Math types
@@ -133,19 +186,105 @@ m  = rdl2.Mat4d(rdl2.Vec4d(1,0,0,0),
 
 Full set: `Rgb`, `Rgba`, `Vec2f/d`, `Vec3f/d`, `Vec4f/d`, `Mat4f/d`.
 
+Math types can be constructed implicitly from Python lists or tuples wherever a C++ value or const-reference parameter is expected:
+
+```python
+with rdl2.UpdateGuard(sv):
+    sv['fatal_color'] = [1.0, 0.0, 0.0]          # list → Rgb
+    sv['fatal_color'] = (0.5, 0.5, 0.5)          # tuple → Rgb
+
+geo.setNodeXform([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])  # list-of-lists → Mat4d
+```
+
+### UserData
+
+`UserData` objects carry typed key/value channels used to pass primitive attributes (per-vertex colours, UVs, etc.) through the rdl2 context.
+
+```python
+ctx.setDsoPath('/Applications/MoonRay/installs/openmoonray/rdl2dso')
+ctx.loadAllSceneClasses()
+
+ud = ctx.createSceneObject('UserData', '/my/primvars').asUserData()
+
+with rdl2.UpdateGuard(ud):
+    ud.setRate(rdl2.UserData.Rate.VERTEX)
+    ud.setFloatData('Cd_r', [0.1, 0.2, 0.3])           # single timestep
+    ud.setVec3fData('N', [rdl2.Vec3f(0,1,0)],           # dual timestep (blur)
+                         [rdl2.Vec3f(0,0,1)])
+
+print(ud.getFloatKey())         # 'Cd_r'
+print(list(ud.getFloatValues()))  # [0.1, 0.2, 0.3]
+print(ud.getRate())             # UserData.Rate.VERTEX
+```
+
+Supported channels and their blur support:
+
+| Channel | Type | Blur (dual-timestep) |
+|---------|------|----------------------|
+| Bool    | `bool` | No |
+| Int     | `int` | No |
+| String  | `str` | No |
+| Float   | `float` | Yes |
+| Color   | `Rgb` | Yes |
+| Vec2f   | `Vec2f` | Yes |
+| Vec3f   | `Vec3f` | Yes |
+| Mat4f   | `Mat4f` | Yes |
+
+Rate values: `UserData.Rate.AUTO`, `CONSTANT`, `PART`, `UNIFORM`, `VERTEX`, `VARYING`, `FACE_VARYING`.
+
+### Metadata
+
+```python
+md = ctx.createSceneObject('Metadata', '/exr/meta').asMetadata()
+with rdl2.UpdateGuard(md):
+    md.setAttributes(['title', 'date'],
+                     ['string', 'string'],
+                     ['My Render', '2026-01-01'])
+
+print(md.getAttributeNames())   # ['title', 'date']
+print(md.getAttributeValues())  # ['My Render', '2026-01-01']
+```
+
+### TraceSet
+
+```python
+ts  = ctx.createSceneObject('TraceSet', '/traceset').asTraceSet()
+geo = ctx.createSceneObject('BoxGeometry', '/box').asGeometry()
+
+with rdl2.UpdateGuard(ts):
+    aid = ts.assign(geo, 'part_A')   # returns assignment ID
+
+geom, part = ts.lookupGeomAndPart(aid)
+ids = ts.getAssignmentIds(geo)       # list[int]
+```
+
 ## API reference
 
 | Category | Types / symbols |
 |---|---|
 | **Math** | `Rgb` `Rgba` `Vec2f` `Vec2d` `Vec3f` `Vec3d` `Vec4f` `Vec4d` `Mat4f` `Mat4d` |
-| **Enums** | `AttributeType` `AttributeFlags` `AttributeTimestep` `SceneObjectInterface` `MotionBlurType` `PixelFilterType` `TaskDistributionType` `VolumeOverlapMode` `ShadowTerminatorFix` `TextureFilterType` `GeometrySideType` |
+| **Enums** | `AttributeType` `AttributeFlags` `AttributeTimestep` `SceneObjectInterface` `MotionBlurType` `PixelFilterType` `TaskDistributionType` `VolumeOverlapMode` `ShadowTerminatorFix` `TextureFilterType` `GeometrySideType` `UserData.Rate` |
 | **Scene** | `SceneContext` `SceneClass` `SceneObject` `SceneVariables` `UpdateGuard` |
-| **Nodes** | `Node` `Camera` `Geometry` `Light` |
+| **Nodes** | `Node` `Camera` `Geometry` `EnvMap` `Joint` |
+| **Light** | `Light` |
 | **Shaders** | `Shader` `RootShader` `Material` `Displacement` `VolumeShader` `Map` `NormalMap` |
-| **Collections** | `GeometrySet` `LightSet` `Layer` `LayerAssignment` |
+| **Collections** | `GeometrySet` `ShadowReceiverSet` `LightSet` `ShadowSet` `LightFilter` `LightFilterSet` `DisplayFilter` `Layer` `LayerAssignment` |
+| **Data / metadata** | `UserData` `Metadata` `TraceSet` |
 | **Output** | `RenderOutput` |
-| **I/O** | `AsciiReader` `AsciiWriter` |
+| **I/O** | `AsciiReader` `AsciiWriter` `BinaryReader` `BinaryWriter` |
 | **Free functions** | `attributeTypeName(AttributeType) -> str` |
+
+### SceneObject dict-style attribute access
+
+All `SceneObject` subclasses (including `SceneVariables`) support `[]` for attribute read/write:
+
+```python
+obj['attr_name']                            # get at TIMESTEP_BEGIN
+obj['attr_name', rdl2.TIMESTEP_END]         # get at specific timestep
+obj['attr_name'] = value                    # set at TIMESTEP_BEGIN
+obj['attr_name', rdl2.TIMESTEP_END] = value # set at specific timestep
+'attr_name' in obj                          # True if attribute exists
+```
 
 ## Known limitation
 
