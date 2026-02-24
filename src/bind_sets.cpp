@@ -68,4 +68,66 @@ void bind_sets(py::module_& m)
     // -----------------------------------------------------------------------
     py::class_<rdl2::ShadowReceiverSet, rdl2::GeometrySet>(m, "ShadowReceiverSet")
         .def("haveGeometriesChanged", &rdl2::ShadowReceiverSet::haveGeometriesChanged);
+
+    // -----------------------------------------------------------------------
+    // DisplayFilter (inherits SceneObject)
+    // getInputData / filterv use moonray-internal types and are not exposed.
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::DisplayFilter, rdl2::SceneObject>(m, "DisplayFilter");
+
+    // -----------------------------------------------------------------------
+    // Metadata (inherits SceneObject)
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::Metadata, rdl2::SceneObject>(m, "Metadata")
+        .def("setAttributes", [](rdl2::Metadata& self,
+                                 const std::vector<std::string>& names,
+                                 const std::vector<std::string>& types,
+                                 const std::vector<std::string>& values) {
+            rdl2::StringVector n(names), t(types), v(values);
+            self.setAttributes(n, t, v);
+        }, py::arg("names"), py::arg("types"), py::arg("values"),
+        "Set EXR header metadata entries as parallel name/type/value lists.")
+        .def("getAttributeNames",  [](const rdl2::Metadata& self) {
+            return std::vector<std::string>(self.getAttributeNames().begin(),
+                                           self.getAttributeNames().end());
+        })
+        .def("getAttributeTypes",  [](const rdl2::Metadata& self) {
+            return std::vector<std::string>(self.getAttributeTypes().begin(),
+                                           self.getAttributeTypes().end());
+        })
+        .def("getAttributeValues", [](const rdl2::Metadata& self) {
+            return std::vector<std::string>(self.getAttributeValues().begin(),
+                                           self.getAttributeValues().end());
+        });
+
+    // -----------------------------------------------------------------------
+    // TraceSet (inherits SceneObject)
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::TraceSet, rdl2::SceneObject>(m, "TraceSet")
+        .def("getAssignmentCount", &rdl2::TraceSet::getAssignmentCount,
+             "Returns the number of Geometry/Part assignments in this TraceSet.")
+        .def("assign", &rdl2::TraceSet::assign,
+             py::arg("geometry"), py::arg("part_name"),
+             "Add a Geometry/Part pair and return its assignment ID.")
+        .def("lookupGeomAndPart", [](const rdl2::TraceSet& self, int32_t assignmentId) {
+            auto pair = self.lookupGeomAndPart(assignmentId);
+            return py::make_tuple(
+                py::cast(pair.first, py::return_value_policy::reference),
+                std::string(pair.second));
+        }, py::arg("assignment_id"),
+        "Return (Geometry, part_name) for a given assignment ID.")
+        .def("getAssignmentId", &rdl2::TraceSet::getAssignmentId,
+             py::arg("geometry"), py::arg("part_name"),
+             "Return the assignment ID for a Geometry/Part pair, or -1 if not found.")
+        .def("contains", &rdl2::TraceSet::contains,
+             py::arg("geometry"),
+             "Return True if the given Geometry appears in this TraceSet.")
+        .def("getAssignmentIds", [](const rdl2::TraceSet& self,
+                                    const rdl2::Geometry* geometry) {
+            std::vector<int32_t> ids;
+            for (auto it = self.begin(geometry); it != self.end(geometry); ++it)
+                ids.push_back(*it);
+            return ids;
+        }, py::arg("geometry"),
+        "Return a list of all assignment IDs for the given Geometry.");
 }

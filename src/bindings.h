@@ -43,6 +43,11 @@
 #include <scene_rdl2/scene/rdl2/AsciiWriter.h>
 #include <scene_rdl2/scene/rdl2/BinaryReader.h>
 #include <scene_rdl2/scene/rdl2/BinaryWriter.h>
+#include <scene_rdl2/scene/rdl2/DisplayFilter.h>
+#include <scene_rdl2/scene/rdl2/EnvMap.h>
+#include <scene_rdl2/scene/rdl2/Joint.h>
+#include <scene_rdl2/scene/rdl2/Metadata.h>
+#include <scene_rdl2/scene/rdl2/TraceSet.h>
 
 // SceneObject and all its subclasses declare their copy constructors as
 // private and leave them undefined (the C++03 non-copyable idiom, without
@@ -77,6 +82,11 @@ MARK_NON_COPYABLE(scene_rdl2::rdl2::ShadowSet)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::ShadowReceiverSet)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::Layer)
 MARK_NON_COPYABLE(scene_rdl2::rdl2::RenderOutput)
+MARK_NON_COPYABLE(scene_rdl2::rdl2::DisplayFilter)
+MARK_NON_COPYABLE(scene_rdl2::rdl2::EnvMap)
+MARK_NON_COPYABLE(scene_rdl2::rdl2::Joint)
+MARK_NON_COPYABLE(scene_rdl2::rdl2::Metadata)
+MARK_NON_COPYABLE(scene_rdl2::rdl2::TraceSet)
 #undef MARK_NON_COPYABLE
 }} // namespace pybind11::detail
 

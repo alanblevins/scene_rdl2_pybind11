@@ -55,4 +55,14 @@ void bind_node(py::module_& m)
         .value("SINGLE_SIDED",       rdl2::Geometry::SINGLE_SIDED)
         .value("MESH_DEFAULT_SIDED", rdl2::Geometry::MESH_DEFAULT_SIDED)
         .export_values();
+
+    // -----------------------------------------------------------------------
+    // EnvMap (inherits Node)
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::EnvMap, rdl2::Node>(m, "EnvMap");
+
+    // -----------------------------------------------------------------------
+    // Joint (inherits Node)
+    // -----------------------------------------------------------------------
+    py::class_<rdl2::Joint, rdl2::Node>(m, "Joint");
 }

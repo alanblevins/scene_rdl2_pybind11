@@ -254,6 +254,11 @@ void bind_scene_object(py::module_& m)
         .def("isLightFilterSet",    [](const rdl2::SceneObject& s){ return s.isA<rdl2::LightFilterSet>(); })
         .def("isShadowSet",         [](const rdl2::SceneObject& s){ return s.isA<rdl2::ShadowSet>(); })
         .def("isShadowReceiverSet", [](const rdl2::SceneObject& s){ return s.isA<rdl2::ShadowReceiverSet>(); })
+        .def("isDisplayFilter",     [](const rdl2::SceneObject& s){ return s.isA<rdl2::DisplayFilter>(); })
+        .def("isEnvMap",            [](const rdl2::SceneObject& s){ return s.isA<rdl2::EnvMap>(); })
+        .def("isJoint",             [](const rdl2::SceneObject& s){ return s.isA<rdl2::Joint>(); })
+        .def("isMetadata",          [](const rdl2::SceneObject& s){ return s.isA<rdl2::Metadata>(); })
+        .def("isTraceSet",          [](const rdl2::SceneObject& s){ return s.isA<rdl2::TraceSet>(); })
         // Safe downcasts
         .def("asCamera", [](rdl2::SceneObject* s) -> rdl2::Camera* {
             return s->asA<rdl2::Camera>();
@@ -293,6 +298,21 @@ void bind_scene_object(py::module_& m)
         }, py::return_value_policy::reference)
         .def("asShadowReceiverSet", [](rdl2::SceneObject* s) -> rdl2::ShadowReceiverSet* {
             return s->asA<rdl2::ShadowReceiverSet>();
+        }, py::return_value_policy::reference)
+        .def("asDisplayFilter", [](rdl2::SceneObject* s) -> rdl2::DisplayFilter* {
+            return s->asA<rdl2::DisplayFilter>();
+        }, py::return_value_policy::reference)
+        .def("asEnvMap", [](rdl2::SceneObject* s) -> rdl2::EnvMap* {
+            return s->asA<rdl2::EnvMap>();
+        }, py::return_value_policy::reference)
+        .def("asJoint", [](rdl2::SceneObject* s) -> rdl2::Joint* {
+            return s->asA<rdl2::Joint>();
+        }, py::return_value_policy::reference)
+        .def("asMetadata", [](rdl2::SceneObject* s) -> rdl2::Metadata* {
+            return s->asA<rdl2::Metadata>();
+        }, py::return_value_policy::reference)
+        .def("asTraceSet", [](rdl2::SceneObject* s) -> rdl2::TraceSet* {
+            return s->asA<rdl2::TraceSet>();
         }, py::return_value_policy::reference)
         // Dictionary-style attribute access
         // obj["attr"]                         -> get at TIMESTEP_BEGIN
