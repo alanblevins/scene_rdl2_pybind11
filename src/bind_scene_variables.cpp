@@ -7,7 +7,8 @@
 
 void bind_scene_variables(py::module_& m)
 {
-    py::class_<rdl2::SceneVariables, rdl2::SceneObject>(m, "SceneVariables")
+    py::class_<rdl2::SceneVariables, rdl2::SceneObject,
+               std::unique_ptr<rdl2::SceneVariables, py::nodelete>>(m, "SceneVariables")
         .def("getRezedWidth",  &rdl2::SceneVariables::getRezedWidth)
         .def("getRezedHeight", &rdl2::SceneVariables::getRezedHeight)
         .def("getMachineId",   &rdl2::SceneVariables::getMachineId)

@@ -24,7 +24,14 @@ void bind_layer(py::module_& m)
     // Layer (inherits SceneObject; Layer inherits via TraceSet in the C++ lib,
     // but we bind it directly under SceneObject for simplicity)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::Layer, rdl2::SceneObject>(m, "Layer")
+    py::class_<rdl2::Layer, rdl2::SceneObject,
+               std::unique_ptr<rdl2::Layer, py::nodelete>>(m, "Layer")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Layer* {
+            auto* r = obj->asA<rdl2::Layer>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to Layer");
+            return r;
+        }), py::arg("scene_object"))
         .def("assign", [](rdl2::Layer& self, rdl2::Geometry* g, const std::string& part,
                           rdl2::Material* mat, rdl2::LightSet* ls) {
             rdl2::SceneObject::UpdateGuard guard(&self);

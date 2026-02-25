@@ -228,7 +228,8 @@ static bool isDefaultAndUnboundByName(const rdl2::SceneObject& self, const std::
 // ---------------------------------------------------------------------------
 void bind_scene_object(py::module_& m)
 {
-    py::class_<rdl2::SceneObject> sceneObjectClass(m, "SceneObject");
+    py::class_<rdl2::SceneObject,
+               std::unique_ptr<rdl2::SceneObject, py::nodelete>> sceneObjectClass(m, "SceneObject");
     sceneObjectClass
         .def("getName", &rdl2::SceneObject::getName,
              py::return_value_policy::reference)

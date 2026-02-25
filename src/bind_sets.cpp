@@ -11,7 +11,14 @@ void bind_sets(py::module_& m)
     // -----------------------------------------------------------------------
     // GeometrySet (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::GeometrySet, rdl2::SceneObject>(m, "GeometrySet")
+    py::class_<rdl2::GeometrySet, rdl2::SceneObject,
+               std::unique_ptr<rdl2::GeometrySet, py::nodelete>>(m, "GeometrySet")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::GeometrySet* {
+            auto* r = obj->asA<rdl2::GeometrySet>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to GeometrySet");
+            return r;
+        }), py::arg("scene_object"))
         .def("getGeometries", [](const rdl2::GeometrySet& self) {
             const rdl2::SceneObjectIndexable& idx = self.getGeometries();
             return std::vector<rdl2::SceneObject*>(idx.begin(), idx.end());
@@ -36,7 +43,14 @@ void bind_sets(py::module_& m)
     // -----------------------------------------------------------------------
     // LightSet (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::LightSet, rdl2::SceneObject>(m, "LightSet")
+    py::class_<rdl2::LightSet, rdl2::SceneObject,
+               std::unique_ptr<rdl2::LightSet, py::nodelete>>(m, "LightSet")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::LightSet* {
+            auto* r = obj->asA<rdl2::LightSet>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to LightSet");
+            return r;
+        }), py::arg("scene_object"))
         .def("getLights", [](const rdl2::LightSet& self) {
             return self.getLights();
         }, py::return_value_policy::reference,
@@ -58,13 +72,27 @@ void bind_sets(py::module_& m)
     // -----------------------------------------------------------------------
     // LightFilter (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::LightFilter, rdl2::SceneObject>(m, "LightFilter")
+    py::class_<rdl2::LightFilter, rdl2::SceneObject,
+               std::unique_ptr<rdl2::LightFilter, py::nodelete>>(m, "LightFilter")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::LightFilter* {
+            auto* r = obj->asA<rdl2::LightFilter>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to LightFilter");
+            return r;
+        }), py::arg("scene_object"))
         .def("isOn", &rdl2::LightFilter::isOn);
 
     // -----------------------------------------------------------------------
     // LightFilterSet (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::LightFilterSet, rdl2::SceneObject>(m, "LightFilterSet")
+    py::class_<rdl2::LightFilterSet, rdl2::SceneObject,
+               std::unique_ptr<rdl2::LightFilterSet, py::nodelete>>(m, "LightFilterSet")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::LightFilterSet* {
+            auto* r = obj->asA<rdl2::LightFilterSet>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to LightFilterSet");
+            return r;
+        }), py::arg("scene_object"))
         .def("getLightFilters", [](const rdl2::LightFilterSet& self) {
             const rdl2::SceneObjectVector& v = self.getLightFilters();
             return std::vector<rdl2::SceneObject*>(v.begin(), v.end());
@@ -87,25 +115,53 @@ void bind_sets(py::module_& m)
     // -----------------------------------------------------------------------
     // ShadowSet (inherits LightSet)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::ShadowSet, rdl2::LightSet>(m, "ShadowSet")
+    py::class_<rdl2::ShadowSet, rdl2::LightSet,
+               std::unique_ptr<rdl2::ShadowSet, py::nodelete>>(m, "ShadowSet")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::ShadowSet* {
+            auto* r = obj->asA<rdl2::ShadowSet>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to ShadowSet");
+            return r;
+        }), py::arg("scene_object"))
         .def("haveLightsChanged", &rdl2::ShadowSet::haveLightsChanged);
 
     // -----------------------------------------------------------------------
     // ShadowReceiverSet (inherits GeometrySet)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::ShadowReceiverSet, rdl2::GeometrySet>(m, "ShadowReceiverSet")
+    py::class_<rdl2::ShadowReceiverSet, rdl2::GeometrySet,
+               std::unique_ptr<rdl2::ShadowReceiverSet, py::nodelete>>(m, "ShadowReceiverSet")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::ShadowReceiverSet* {
+            auto* r = obj->asA<rdl2::ShadowReceiverSet>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to ShadowReceiverSet");
+            return r;
+        }), py::arg("scene_object"))
         .def("haveGeometriesChanged", &rdl2::ShadowReceiverSet::haveGeometriesChanged);
 
     // -----------------------------------------------------------------------
     // DisplayFilter (inherits SceneObject)
     // getInputData / filterv use moonray-internal types and are not exposed.
     // -----------------------------------------------------------------------
-    py::class_<rdl2::DisplayFilter, rdl2::SceneObject>(m, "DisplayFilter");
+    py::class_<rdl2::DisplayFilter, rdl2::SceneObject,
+               std::unique_ptr<rdl2::DisplayFilter, py::nodelete>>(m, "DisplayFilter")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::DisplayFilter* {
+            auto* r = obj->asA<rdl2::DisplayFilter>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to DisplayFilter");
+            return r;
+        }), py::arg("scene_object"));
 
     // -----------------------------------------------------------------------
     // Metadata (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::Metadata, rdl2::SceneObject>(m, "Metadata")
+    py::class_<rdl2::Metadata, rdl2::SceneObject,
+               std::unique_ptr<rdl2::Metadata, py::nodelete>>(m, "Metadata")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Metadata* {
+            auto* r = obj->asA<rdl2::Metadata>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to Metadata");
+            return r;
+        }), py::arg("scene_object"))
         .def("setAttributes", [](rdl2::Metadata& self,
                                  const std::vector<std::string>& names,
                                  const std::vector<std::string>& types,
@@ -131,7 +187,14 @@ void bind_sets(py::module_& m)
     // -----------------------------------------------------------------------
     // TraceSet (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::TraceSet, rdl2::SceneObject>(m, "TraceSet")
+    py::class_<rdl2::TraceSet, rdl2::SceneObject,
+               std::unique_ptr<rdl2::TraceSet, py::nodelete>>(m, "TraceSet")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::TraceSet* {
+            auto* r = obj->asA<rdl2::TraceSet>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to TraceSet");
+            return r;
+        }), py::arg("scene_object"))
         .def("getAssignmentCount", &rdl2::TraceSet::getAssignmentCount,
              "Returns the number of Geometry/Part assignments in this TraceSet.")
         .def("assign", [](rdl2::TraceSet& self, rdl2::Geometry* g, const std::string& part) {
@@ -167,7 +230,8 @@ void bind_sets(py::module_& m)
     // Bool, Int, String: single-timestep only.
     // Float, Color, Vec2f, Vec3f, Mat4f: support dual-timestep (blur).
     // -----------------------------------------------------------------------
-    py::class_<rdl2::UserData, rdl2::SceneObject> ud(m, "UserData");
+    py::class_<rdl2::UserData, rdl2::SceneObject,
+               std::unique_ptr<rdl2::UserData, py::nodelete>> ud(m, "UserData");
 
     py::enum_<rdl2::UserData::Rate>(ud, "Rate")
         .value("AUTO",         rdl2::UserData::AUTO)
@@ -180,6 +244,12 @@ void bind_sets(py::module_& m)
         .export_values();
 
     ud
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::UserData* {
+            auto* r = obj->asA<rdl2::UserData>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to UserData");
+            return r;
+        }), py::arg("scene_object"))
         .def("setRate", [](rdl2::UserData& self, rdl2::UserData::Rate rate) {
             rdl2::SceneObject::UpdateGuard guard(&self);
             self.setRate(static_cast<int>(rate));

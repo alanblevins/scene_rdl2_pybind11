@@ -10,7 +10,14 @@ void bind_render_output(py::module_& m)
     // -----------------------------------------------------------------------
     // RenderOutput (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::RenderOutput, rdl2::SceneObject>(m, "RenderOutput")
+    py::class_<rdl2::RenderOutput, rdl2::SceneObject,
+               std::unique_ptr<rdl2::RenderOutput, py::nodelete>>(m, "RenderOutput")
+        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::RenderOutput* {
+            auto* r = obj->asA<rdl2::RenderOutput>();
+            if (!r) throw py::type_error(
+                "cannot cast '" + obj->getSceneClass().getName() + "' to RenderOutput");
+            return r;
+        }), py::arg("scene_object"))
         .def("getActive",               &rdl2::RenderOutput::getActive)
         .def("getResult",               &rdl2::RenderOutput::getResult)
         .def("getOutputType",           &rdl2::RenderOutput::getOutputType)
