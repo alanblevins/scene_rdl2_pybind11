@@ -361,10 +361,6 @@ obj['attr_name', rdl2.TIMESTEP_END] = value # set at specific timestep
 'attr_name' in obj                          # True if attribute exists
 ```
 
-## Known limitation
-
-The `SceneContext` destructor calls into MoonRay's DSO-loading infrastructure, which aborts when run outside the full MoonRay pipeline. Normal script usage (create context, use it, exit) is unaffected because Python's interpreter shutdown triggers the abort after all user code has completed.
-
 ## License
 
 MIT — see [LICENSE.md](LICENSE.md).
