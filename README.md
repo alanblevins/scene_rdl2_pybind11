@@ -37,6 +37,19 @@ The suite writes fixture files to `tests/fixtures/` (gitignored) on first run.
 
 ## Usage
 
+For a complete, working example see **[example/example.py](example/example.py)**.  It
+builds a render-ready MoonRay scene from scratch — five primitive geometry types lined
+up in a row, each with a coloured material, a key light, and a framed camera — then
+exports it as `scene.rdla`.  The output can be rendered directly:
+
+```bash
+cd example
+python3.13 example.py          # writes scene.rdla
+moonray -in scene.rdla -out beauty.exr
+```
+
+The snippets below document the individual parts of the API.
+
 ```python
 import sys
 sys.path.insert(0, 'build')

@@ -1,0 +1,105 @@
+SceneVariables {
+    ["camera"] = PerspectiveCamera("/cam/main"),
+    ["layer"] = Layer("/layer/main"),
+    ["image_width"] = 1280,
+    ["image_height"] = 720,
+    ["pixel_samples"] = 4,
+}
+
+BoxGeometry("/geo/box") {
+    ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -3, 1, 0, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -3, 1, 0, 1)),
+    ["size"] = Vec3(2, 2, 2),
+}
+
+RdlCurveGeometry("/geo/curves") {
+    ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 3, 0, 0, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 3, 0, 0, 1)),
+    ["curves_vertex_count"] = { 4, 4, 4},
+    ["vertex_list_0"] = { Vec3(-0.600000024, 0, 0), Vec3(-0.400000006, 0.649999976, 0), Vec3(-0.400000006, 1.35000002, 0), Vec3(-0.600000024, 2, 0), Vec3(0, 0, 0), Vec3(0, 0.649999976, 0), Vec3(0, 1.35000002, 0), Vec3(0, 2, 0), Vec3(0.600000024, 0, 0), Vec3(0.400000006, 0.649999976, 0), Vec3(0.400000006, 1.35000002, 0), Vec3(0.600000024, 2, 0)},
+    ["radius_list"] = { 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007},
+}
+
+RdlPointGeometry("/geo/points") {
+    ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 6, 0, 0, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 6, 0, 0, 1)),
+    ["vertex_list_0"] = { Vec3(0, 0.300000012, 0), Vec3(-0.550000012, 0.300000012, 0), Vec3(0.550000012, 0.300000012, 0), Vec3(0, 1.10000002, 0), Vec3(-0.349999994, 0.899999976, 0.349999994), Vec3(0.349999994, 0.899999976, -0.349999994), Vec3(0, 1.75, 0)},
+    ["radius_list"] = { 0.300000012, 0.280000001, 0.280000001, 0.25, 0.219999999, 0.219999999, 0.180000007},
+}
+
+RdlMeshGeometry("/geo/quad") {
+    ["face_vertex_count"] = { 4},
+    ["vertices_by_index"] = { 0, 1, 2, 3},
+    ["vertex_list_0"] = { Vec3(-1, 0, 0), Vec3(1, 0, 0), Vec3(1, 2, 0), Vec3(-1, 2, 0)},
+    ["is_subd"] = false,
+}
+
+SphereGeometry("/geo/sphere") {
+    ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -6, 1, 0, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -6, 1, 0, 1)),
+}
+
+GeometrySet("/geoset/main") {
+    BoxGeometry("/geo/box"),
+    RdlCurveGeometry("/geo/curves"),
+    RdlPointGeometry("/geo/points"),
+    RdlMeshGeometry("/geo/quad"),
+    SphereGeometry("/geo/sphere"),
+}
+
+Layer("/layer/main") {
+    {BoxGeometry("/geo/box"), "", BaseMaterial("/mat/orange"), LightSet("/lightset/main"), undef(), undef(), undef(), undef(), undef()},
+    {RdlCurveGeometry("/geo/curves"), "", BaseMaterial("/mat/blue"), LightSet("/lightset/main"), undef(), undef(), undef(), undef(), undef()},
+    {RdlPointGeometry("/geo/points"), "", BaseMaterial("/mat/purple"), LightSet("/lightset/main"), undef(), undef(), undef(), undef(), undef()},
+    {RdlMeshGeometry("/geo/quad"), "", BaseMaterial("/mat/green"), LightSet("/lightset/main"), undef(), undef(), undef(), undef(), undef()},
+    {SphereGeometry("/geo/sphere"), "", BaseMaterial("/mat/red"), LightSet("/lightset/main"), undef(), undef(), undef(), undef(), undef()},
+}
+
+BaseMaterial("/mat/blue") {
+    ["diffuse_color"] = bind(undef(), Rgb(0.100000001, 0.25, 0.899999976)),
+    ["specular_factor"] = 0.5,
+    ["specular_roughness"] = bind(undef(), 0.25),
+}
+
+BaseMaterial("/mat/green") {
+    ["diffuse_color"] = bind(undef(), Rgb(0.180000007, 0.720000029, 0.180000007)),
+    ["specular_factor"] = 0.5,
+    ["specular_roughness"] = bind(undef(), 0.25),
+}
+
+BaseMaterial("/mat/orange") {
+    ["diffuse_color"] = bind(undef(), Rgb(0.899999976, 0.5, 0.0799999982)),
+    ["specular_factor"] = 0.5,
+    ["specular_roughness"] = bind(undef(), 0.25),
+}
+
+BaseMaterial("/mat/purple") {
+    ["diffuse_color"] = bind(undef(), Rgb(0.600000024, 0.100000001, 0.850000024)),
+    ["specular_factor"] = 0.5,
+    ["specular_roughness"] = bind(undef(), 0.25),
+}
+
+BaseMaterial("/mat/red") {
+    ["diffuse_color"] = bind(undef(), Rgb(0.850000024, 0.119999997, 0.119999997)),
+    ["specular_factor"] = 0.5,
+    ["specular_roughness"] = bind(undef(), 0.25),
+}
+
+SphereLight("/light/key") {
+    ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -5, 12, 8, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -5, 12, 8, 1)),
+    ["color"] = Rgb(1, 0.959999979, 0.879999995),
+    ["intensity"] = 20,
+    ["radius"] = 2,
+}
+
+LightSet("/lightset/main") {
+    SphereLight("/light/key"),
+}
+
+PerspectiveCamera("/cam/main") {
+    ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 0.98058067569092022, -0.19611613513818404, 0, 0, 0.19611613513818404, 0.98058067569092022, 0, 0, 5, 20, 1), Mat4(1, 0, 0, 0, 0, 0.98058067569092022, -0.19611613513818404, 0, 0, 0.19611613513818404, 0.98058067569092022, 0, 0, 5, 20, 1)),
+    ["near"] = 0.100000001,
+    ["far"] = 1000,
+    ["focal"] = blur(24, 24),
+    ["film_width_aperture"] = 36,
+}
+
+RenderOutput("/output/beauty") {
+    ["channel_name"] = "beauty",
+}
