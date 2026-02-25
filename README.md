@@ -30,7 +30,7 @@ Open the project folder and use **Cmd+Shift+B** to build (runs CMake configure +
 ## Running the tests
 
 ```bash
-python3.13 -m unittest discover tests/ -v
+python3.13 -m unittest discover -s tests -t . -v
 ```
 
 The suite writes fixture files to `tests/fixtures/` (gitignored) on first run.
