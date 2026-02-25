@@ -70,13 +70,26 @@ target_compile_options(scene_rdl2 PRIVATE
     -fPIC
 )
 
+# Locate the MoonRay scene_rdl2 shared library without hard-coding the extension
+# (.dylib on macOS, .so on Linux).
+find_library(MOONRAY_SCENE_RDL2_LIB
+    NAMES scene_rdl2
+    PATHS "${MOONRAY_LIB}"
+    NO_DEFAULT_PATH
+    REQUIRED
+)
+
 # Link against scene_rdl2 and threads; do NOT link libpython (Python extension
 # modules must leave Python symbols unresolved so the host interpreter provides them).
 target_link_libraries(scene_rdl2 PRIVATE
     Threads::Threads
-    ${MOONRAY_LIB}/libscene_rdl2.dylib
-    "-undefined dynamic_lookup"
+    ${MOONRAY_SCENE_RDL2_LIB}
 )
+# -undefined dynamic_lookup is Apple ld only; Linux resolves Python symbols at
+# runtime via the embedding interpreter without any extra flag.
+if(APPLE)
+    target_link_libraries(scene_rdl2 PRIVATE "-undefined dynamic_lookup")
+endif()
 
 # Install the module
 install(TARGETS scene_rdl2 DESTINATION .)
