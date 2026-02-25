@@ -7,7 +7,7 @@ Python bindings for the [DreamWorks MoonRay](https://github.com/dreamworksanimat
 - **macOS** (arm64)
 - **CMake 3.12+**
 - **Python 3.13** (homebrew) — `brew install python@3.13`
-- **MoonRay** installed at `/Applications/MoonRay/installs/` (provides `scene_rdl2`, pybind11 2.13.6, boost, tbb, lua)
+- **MoonRay** environment configured — `REZ_MOONRAY_ROOT` and `RDL2_DSO_PATH` must be set (source MoonRay's `setup.sh` or activate the Rez environment)
 
 ## Building
 
@@ -60,7 +60,7 @@ import scene_rdl2 as rdl2
 
 ```python
 ctx = rdl2.SceneContext()
-ctx.setDsoPath('/Applications/MoonRay/installs/openmoonray/rdl2dso')
+ctx.setDsoPath(os.environ['RDL2_DSO_PATH'])
 sv  = ctx.getSceneVariables()
 
 # Read an attribute using dict-style access
@@ -212,7 +212,7 @@ geo.setNodeXform([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])  # list-of-lists →
 `UserData` objects carry typed key/value channels used to pass primitive attributes (per-vertex colours, UVs, etc.) through the rdl2 context.
 
 ```python
-ctx.setDsoPath('/Applications/MoonRay/installs/openmoonray/rdl2dso')
+ctx.setDsoPath(os.environ['RDL2_DSO_PATH'])
 ctx.loadAllSceneClasses()
 
 ud = ctx.createSceneObject('UserData', '/my/primvars').asUserData()

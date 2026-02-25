@@ -3,7 +3,7 @@
     "python.terminal.activateEnvironment": false,
     "terminal.integrated.env.osx": {
         "PYTHONPATH": "${workspaceFolder}/build/scene_rdl2",
-        "DYLD_LIBRARY_PATH": "/Applications/MoonRay/installs/openmoonray/lib:/Applications/MoonRay/installs/lib"
+        "DYLD_LIBRARY_PATH": "${env:REZ_MOONRAY_ROOT}/lib:${env:REZ_MOONRAY_ROOT}/../lib"
     },
     "cmake.buildDirectory": "${workspaceFolder}/build",
     "cmake.configureArgs": [

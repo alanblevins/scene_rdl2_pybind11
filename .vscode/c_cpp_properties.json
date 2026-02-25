@@ -4,8 +4,8 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/include",
-                "/Applications/MoonRay/installs/openmoonray/include",
-                "/Applications/MoonRay/installs/include",
+                "${env:REZ_MOONRAY_ROOT}/include",
+                "${env:REZ_MOONRAY_ROOT}/../include",
                 "/opt/homebrew/include",
                 "/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13"
             ],

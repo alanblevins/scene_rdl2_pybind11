@@ -13,11 +13,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 find_package(Threads REQUIRED)
 
-# MoonRay ships pybind11 2.13.6 at /Applications/MoonRay/installs/include.
-# We use that exclusively (option 4) rather than the homebrew pybind11 3.0.1.
-set(MOONRAY_INCLUDE  /Applications/MoonRay/installs/openmoonray/include)
-set(MOONRAY_DEP_INC  /Applications/MoonRay/installs/include)   # boost, tbb, lua, pybind11
-set(MOONRAY_LIB      /Applications/MoonRay/installs/openmoonray/lib)
+# Read MoonRay install root from the environment (set by MoonRay's setup.sh / Rez).
+# MoonRay ships pybind11 2.13.6 alongside its own headers; we use that exclusively
+# rather than any separately installed pybind11.
+if(NOT DEFINED ENV{REZ_MOONRAY_ROOT})
+    message(FATAL_ERROR
+        "REZ_MOONRAY_ROOT is not set.\n"
+        "Source MoonRay's setup.sh (or activate the Rez environment) before running cmake.")
+endif()
+set(MOONRAY_ROOT    "$ENV{REZ_MOONRAY_ROOT}")
+get_filename_component(MOONRAY_INSTALLS_DIR "${MOONRAY_ROOT}" DIRECTORY)
+set(MOONRAY_INCLUDE "${MOONRAY_ROOT}/include")
+set(MOONRAY_DEP_INC "${MOONRAY_INSTALLS_DIR}/include")   # boost, tbb, lua, pybind11
+set(MOONRAY_LIB     "${MOONRAY_ROOT}/lib")
 
 include_directories(
     ${MOONRAY_INCLUDE}
@@ -52,8 +60,8 @@ set_target_properties(scene_rdl2 PROPERTIES
     PREFIX ""
     SUFFIX ".${Python3_SOABI}.so"
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    BUILD_RPATH "${MOONRAY_LIB};/Applications/MoonRay/installs/lib"
-    INSTALL_RPATH "${MOONRAY_LIB};/Applications/MoonRay/installs/lib"
+    BUILD_RPATH "${MOONRAY_LIB};${MOONRAY_INSTALLS_DIR}/lib"
+    INSTALL_RPATH "${MOONRAY_LIB};${MOONRAY_INSTALLS_DIR}/lib"
 )
 
 # Standard flags for a Python extension module

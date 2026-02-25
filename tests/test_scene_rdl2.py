@@ -28,7 +28,9 @@ if os.path.isdir(_BUILD):
 
 import scene_rdl2 as rdl2
 
-DSO_PATH = "/Applications/MoonRay/installs/openmoonray/rdl2dso"
+DSO_PATH = os.environ.get('RDL2_DSO_PATH')
+if not DSO_PATH:
+    sys.exit("Error: RDL2_DSO_PATH is not set. Source MoonRay's setup.sh before running.")
 _FIXTURE_DIR = os.path.join(_HERE, "fixtures")
 
 

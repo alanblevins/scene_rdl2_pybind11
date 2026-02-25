@@ -13,7 +13,9 @@ build_dir = os.path.join(os.path.dirname(__file__), 'build')
 if os.path.exists(build_dir):
     sys.path.insert(0, build_dir)
 
-DSO_PATH = "/Applications/MoonRay/installs/openmoonray/rdl2dso"
+DSO_PATH = os.environ.get('RDL2_DSO_PATH')
+if not DSO_PATH:
+    sys.exit("Error: RDL2_DSO_PATH is not set. Source MoonRay's setup.sh before running.")
 
 try:
     import scene_rdl2 as rdl2
