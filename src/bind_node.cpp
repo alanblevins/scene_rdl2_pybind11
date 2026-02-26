@@ -5,19 +5,33 @@
 
 #include "bindings.h"
 
+// ---------------------------------------------------------------------------
+// Macro: define a downcasting constructor for SceneObject-derived types.
+//
+// In nanobind, holder types do not exist.  The pybind11 pattern of returning
+// a raw T* from py::init() is replaced by overriding __new__ to produce a
+// non-owning reference (inst_reference: destruct=false, cpp_delete=false),
+// then providing a no-op __init__ so Python does not complain about extra args.
+// ---------------------------------------------------------------------------
+#define DEF_DOWNCAST_CTOR(CLS, NM)                                          \
+    .def_static("__new__",                                                  \
+        [](py::handle type, rdl2::SceneObject* obj) -> py::object {        \
+            auto* r = obj->asA<rdl2::CLS>();                                \
+            if (!r) throw py::type_error(                                   \
+                ("cannot cast '" + obj->getSceneClass().getName() +         \
+                 "' to " NM).c_str());                                      \
+            return py::inst_reference(type, r);                             \
+        }, py::arg("type"), py::arg("scene_object"))                        \
+    .def("__init__", [](py::object, rdl2::SceneObject*) {},                 \
+         py::arg("scene_object"))
+
 void bind_node(py::module_& m)
 {
     // -----------------------------------------------------------------------
     // Node (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::Node, rdl2::SceneObject,
-               std::unique_ptr<rdl2::Node, py::nodelete>>(m, "Node")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Node* {
-            auto* r = obj->asA<rdl2::Node>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Node");
-            return r;
-        }), py::arg("scene_object"))
+    py::class_<rdl2::Node, rdl2::SceneObject>(m, "Node")
+        DEF_DOWNCAST_CTOR(Node, "Node")
         .def("getNodeXform", [](const rdl2::Node& self) {
             return self.get(rdl2::Node::sNodeXformKey);
         }, "Returns the node transform matrix (Mat4d).")
@@ -29,18 +43,12 @@ void bind_node(py::module_& m)
     // -----------------------------------------------------------------------
     // Camera (inherits Node)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::Camera, rdl2::Node,
-               std::unique_ptr<rdl2::Camera, py::nodelete>>(m, "Camera")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Camera* {
-            auto* r = obj->asA<rdl2::Camera>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Camera");
-            return r;
-        }), py::arg("scene_object"))
+    py::class_<rdl2::Camera, rdl2::Node>(m, "Camera")
+        DEF_DOWNCAST_CTOR(Camera, "Camera")
         .def("getMediumMaterial", &rdl2::Camera::getMediumMaterial,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getMediumGeometry", &rdl2::Camera::getMediumGeometry,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getNear", [](const rdl2::Camera& self) {
             return self.get(rdl2::Camera::sNearKey);
         })
@@ -59,23 +67,17 @@ void bind_node(py::module_& m)
     // -----------------------------------------------------------------------
     // Geometry (inherits Node)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::Geometry, rdl2::Node,
-               std::unique_ptr<rdl2::Geometry, py::nodelete>>(m, "Geometry")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Geometry* {
-            auto* r = obj->asA<rdl2::Geometry>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Geometry");
-            return r;
-        }), py::arg("scene_object"))
+    py::class_<rdl2::Geometry, rdl2::Node>(m, "Geometry")
+        DEF_DOWNCAST_CTOR(Geometry, "Geometry")
         .def("isStatic",           &rdl2::Geometry::isStatic)
         .def("getSideType",        &rdl2::Geometry::getSideType)
         .def("getReverseNormals",  &rdl2::Geometry::getReverseNormals)
         .def("getRayEpsilon",      &rdl2::Geometry::getRayEpsilon)
         .def("getShadowRayEpsilon",&rdl2::Geometry::getShadowRayEpsilon)
         .def("getShadowReceiverLabel",    &rdl2::Geometry::getShadowReceiverLabel,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getShadowExclusionMappings",&rdl2::Geometry::getShadowExclusionMappings,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getVisibilityMask",  &rdl2::Geometry::getVisibilityMask);
 
     py::enum_<rdl2::Geometry::SideType>(m, "GeometrySideType")
@@ -87,24 +89,14 @@ void bind_node(py::module_& m)
     // -----------------------------------------------------------------------
     // EnvMap (inherits Node)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::EnvMap, rdl2::Node,
-               std::unique_ptr<rdl2::EnvMap, py::nodelete>>(m, "EnvMap")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::EnvMap* {
-            auto* r = obj->asA<rdl2::EnvMap>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to EnvMap");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::EnvMap, rdl2::Node>(m, "EnvMap")
+        DEF_DOWNCAST_CTOR(EnvMap, "EnvMap");
 
     // -----------------------------------------------------------------------
     // Joint (inherits Node)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::Joint, rdl2::Node,
-               std::unique_ptr<rdl2::Joint, py::nodelete>>(m, "Joint")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Joint* {
-            auto* r = obj->asA<rdl2::Joint>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Joint");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::Joint, rdl2::Node>(m, "Joint")
+        DEF_DOWNCAST_CTOR(Joint, "Joint");
 }
+
+#undef DEF_DOWNCAST_CTOR

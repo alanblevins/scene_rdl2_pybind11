@@ -6,7 +6,7 @@
 
 #include "bindings.h"
 
-PYBIND11_MODULE(scene_rdl2, m) {
+NB_MODULE(scene_rdl2, m) {
     m.doc() = "Python bindings for the scene_rdl2 library";
 
     // Registration order matters: base classes must precede derived classes.

@@ -7,72 +7,45 @@
 
 #include "bindings.h"
 
+// Helper macro for the downcasting __new__/__init__ pattern (same as bind_node.cpp).
+#define DEF_DOWNCAST_CTOR(CLS, NM)                                          \
+    .def_static("__new__",                                                  \
+        [](py::handle type, rdl2::SceneObject* obj) -> py::object {        \
+            auto* r = obj->asA<rdl2::CLS>();                                \
+            if (!r) throw py::type_error(                                   \
+                ("cannot cast '" + obj->getSceneClass().getName() +         \
+                 "' to " NM).c_str());                                      \
+            return py::inst_reference(type, r);                             \
+        }, py::arg("type"), py::arg("scene_object"))                        \
+    .def("__init__", [](py::object, rdl2::SceneObject*) {},                 \
+         py::arg("scene_object"))
+
 void bind_shaders(py::module_& m)
 {
     // These classes don't expose additional Python methods beyond what they
     // inherit from SceneObject; the bindings exist for type identification,
     // safe downcasting, and constructor-based casting from SceneObject.
 
-    py::class_<rdl2::Shader, rdl2::SceneObject,
-               std::unique_ptr<rdl2::Shader, py::nodelete>>(m, "Shader")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Shader* {
-            auto* r = obj->asA<rdl2::Shader>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Shader");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::Shader, rdl2::SceneObject>(m, "Shader")
+        DEF_DOWNCAST_CTOR(Shader, "Shader");
 
-    py::class_<rdl2::RootShader, rdl2::Shader,
-               std::unique_ptr<rdl2::RootShader, py::nodelete>>(m, "RootShader")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::RootShader* {
-            auto* r = obj->asA<rdl2::RootShader>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to RootShader");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::RootShader, rdl2::Shader>(m, "RootShader")
+        DEF_DOWNCAST_CTOR(RootShader, "RootShader");
 
-    py::class_<rdl2::Material, rdl2::RootShader,
-               std::unique_ptr<rdl2::Material, py::nodelete>>(m, "Material")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Material* {
-            auto* r = obj->asA<rdl2::Material>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Material");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::Material, rdl2::RootShader>(m, "Material")
+        DEF_DOWNCAST_CTOR(Material, "Material");
 
-    py::class_<rdl2::Displacement, rdl2::RootShader,
-               std::unique_ptr<rdl2::Displacement, py::nodelete>>(m, "Displacement")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Displacement* {
-            auto* r = obj->asA<rdl2::Displacement>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Displacement");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::Displacement, rdl2::RootShader>(m, "Displacement")
+        DEF_DOWNCAST_CTOR(Displacement, "Displacement");
 
-    py::class_<rdl2::VolumeShader, rdl2::RootShader,
-               std::unique_ptr<rdl2::VolumeShader, py::nodelete>>(m, "VolumeShader")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::VolumeShader* {
-            auto* r = obj->asA<rdl2::VolumeShader>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to VolumeShader");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::VolumeShader, rdl2::RootShader>(m, "VolumeShader")
+        DEF_DOWNCAST_CTOR(VolumeShader, "VolumeShader");
 
-    py::class_<rdl2::Map, rdl2::Shader,
-               std::unique_ptr<rdl2::Map, py::nodelete>>(m, "Map")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Map* {
-            auto* r = obj->asA<rdl2::Map>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Map");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::Map, rdl2::Shader>(m, "Map")
+        DEF_DOWNCAST_CTOR(Map, "Map");
 
-    py::class_<rdl2::NormalMap, rdl2::Shader,
-               std::unique_ptr<rdl2::NormalMap, py::nodelete>>(m, "NormalMap")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::NormalMap* {
-            auto* r = obj->asA<rdl2::NormalMap>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to NormalMap");
-            return r;
-        }), py::arg("scene_object"));
+    py::class_<rdl2::NormalMap, rdl2::Shader>(m, "NormalMap")
+        DEF_DOWNCAST_CTOR(NormalMap, "NormalMap");
 }
+
+#undef DEF_DOWNCAST_CTOR

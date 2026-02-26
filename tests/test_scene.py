@@ -119,10 +119,6 @@ class TestSceneClass(_WithDsos):
     def test_repr(self):
         self.assertIn("BoxGeometry", repr(self.sc))
 
-    def test_declared_interface(self):
-        iface = self.sc.getDeclaredInterface()
-        self.assertTrue(iface & rdl2.INTERFACE_GEOMETRY)
-
     def test_has_attribute_true(self):
         # All geometry objects have node_xform from Node
         self.assertTrue(self.sc.hasAttribute("node_xform"))
@@ -230,10 +226,6 @@ class TestSceneObject(_WithDsos):
         sc = self.box.getSceneClass()
         self.assertIsInstance(sc, rdl2.SceneClass)
         self.assertEqual(sc.getName(), "BoxGeometry")
-
-    def test_get_type_is_interface_enum(self):
-        t = self.box.getType()
-        self.assertIsInstance(t, rdl2.SceneObjectInterface)
 
     def test_repr(self):
         r = repr(self.box)

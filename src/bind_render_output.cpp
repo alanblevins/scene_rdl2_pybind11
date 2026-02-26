@@ -5,19 +5,25 @@
 
 #include "bindings.h"
 
+#define DEF_DOWNCAST_CTOR(CLS, NM)                                          \
+    .def_static("__new__",                                                  \
+        [](py::handle type, rdl2::SceneObject* obj) -> py::object {        \
+            auto* r = obj->asA<rdl2::CLS>();                                \
+            if (!r) throw py::type_error(                                   \
+                ("cannot cast '" + obj->getSceneClass().getName() +         \
+                 "' to " NM).c_str());                                      \
+            return py::inst_reference(type, r);                             \
+        }, py::arg("type"), py::arg("scene_object"))                        \
+    .def("__init__", [](py::object, rdl2::SceneObject*) {},                 \
+         py::arg("scene_object"))
+
 void bind_render_output(py::module_& m)
 {
     // -----------------------------------------------------------------------
     // RenderOutput (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::RenderOutput, rdl2::SceneObject,
-               std::unique_ptr<rdl2::RenderOutput, py::nodelete>>(m, "RenderOutput")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::RenderOutput* {
-            auto* r = obj->asA<rdl2::RenderOutput>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to RenderOutput");
-            return r;
-        }), py::arg("scene_object"))
+    py::class_<rdl2::RenderOutput, rdl2::SceneObject>(m, "RenderOutput")
+        DEF_DOWNCAST_CTOR(RenderOutput, "RenderOutput")
         .def("getActive",               &rdl2::RenderOutput::getActive)
         .def("getResult",               &rdl2::RenderOutput::getResult)
         .def("getOutputType",           &rdl2::RenderOutput::getOutputType)
@@ -56,7 +62,7 @@ void bind_render_output(py::module_& m)
         .def("getCryptomatteNumExtraChannels",&rdl2::RenderOutput::getCryptomatteNumExtraChannels)
         .def("cryptomatteHasExtraOutput",    &rdl2::RenderOutput::cryptomatteHasExtraOutput)
         .def("getCamera", &rdl2::RenderOutput::getCamera,
-             py::return_value_policy::reference);
+             py::rv_policy::reference);
 
     // -----------------------------------------------------------------------
     // RenderOutput nested enums
@@ -143,3 +149,5 @@ void bind_render_output(py::module_& m)
         .value("DENOISER_INPUT_NORMAL", rdl2::RenderOutput::DENOISER_INPUT_NORMAL)
         .export_values();
 }
+
+#undef DEF_DOWNCAST_CTOR

@@ -5,6 +5,18 @@
 
 #include "bindings.h"
 
+#define DEF_DOWNCAST_CTOR(CLS, NM)                                          \
+    .def_static("__new__",                                                  \
+        [](py::handle type, rdl2::SceneObject* obj) -> py::object {        \
+            auto* r = obj->asA<rdl2::CLS>();                                \
+            if (!r) throw py::type_error(                                   \
+                ("cannot cast '" + obj->getSceneClass().getName() +         \
+                 "' to " NM).c_str());                                      \
+            return py::inst_reference(type, r);                             \
+        }, py::arg("type"), py::arg("scene_object"))                        \
+    .def("__init__", [](py::object, rdl2::SceneObject*) {},                 \
+         py::arg("scene_object"))
+
 void bind_layer(py::module_& m)
 {
     // -----------------------------------------------------------------------
@@ -12,26 +24,19 @@ void bind_layer(py::module_& m)
     // -----------------------------------------------------------------------
     py::class_<rdl2::LayerAssignment>(m, "LayerAssignment")
         .def(py::init<>())
-        .def_readwrite("material",          &rdl2::LayerAssignment::mMaterial)
-        .def_readwrite("lightSet",          &rdl2::LayerAssignment::mLightSet)
-        .def_readwrite("displacement",      &rdl2::LayerAssignment::mDisplacement)
-        .def_readwrite("volumeShader",      &rdl2::LayerAssignment::mVolumeShader)
-        .def_readwrite("lightFilterSet",    &rdl2::LayerAssignment::mLightFilterSet)
-        .def_readwrite("shadowSet",         &rdl2::LayerAssignment::mShadowSet)
-        .def_readwrite("shadowReceiverSet", &rdl2::LayerAssignment::mShadowReceiverSet);
+        .def_rw("material",          &rdl2::LayerAssignment::mMaterial)
+        .def_rw("lightSet",          &rdl2::LayerAssignment::mLightSet)
+        .def_rw("displacement",      &rdl2::LayerAssignment::mDisplacement)
+        .def_rw("volumeShader",      &rdl2::LayerAssignment::mVolumeShader)
+        .def_rw("lightFilterSet",    &rdl2::LayerAssignment::mLightFilterSet)
+        .def_rw("shadowSet",         &rdl2::LayerAssignment::mShadowSet)
+        .def_rw("shadowReceiverSet", &rdl2::LayerAssignment::mShadowReceiverSet);
 
     // -----------------------------------------------------------------------
-    // Layer (inherits SceneObject; Layer inherits via TraceSet in the C++ lib,
-    // but we bind it directly under SceneObject for simplicity)
+    // Layer (inherits SceneObject)
     // -----------------------------------------------------------------------
-    py::class_<rdl2::Layer, rdl2::SceneObject,
-               std::unique_ptr<rdl2::Layer, py::nodelete>>(m, "Layer")
-        .def(py::init([](rdl2::SceneObject* obj) -> rdl2::Layer* {
-            auto* r = obj->asA<rdl2::Layer>();
-            if (!r) throw py::type_error(
-                "cannot cast '" + obj->getSceneClass().getName() + "' to Layer");
-            return r;
-        }), py::arg("scene_object"))
+    py::class_<rdl2::Layer, rdl2::SceneObject>(m, "Layer")
+        DEF_DOWNCAST_CTOR(Layer, "Layer")
         .def("assign", [](rdl2::Layer& self, rdl2::Geometry* g, const std::string& part,
                           rdl2::Material* mat, rdl2::LightSet* ls) {
             rdl2::SceneObject::UpdateGuard guard(&self);
@@ -52,22 +57,24 @@ void bind_layer(py::module_& m)
             return self.assign(g, part, a);
         }, py::arg("geometry"), py::arg("part_name"), py::arg("assignment"))
         .def("lookupMaterial",         &rdl2::Layer::lookupMaterial,
-             py::arg("assignment_id"), py::return_value_policy::reference)
+             py::arg("assignment_id"), py::rv_policy::reference)
         .def("lookupLightSet",         &rdl2::Layer::lookupLightSet,
-             py::arg("assignment_id"), py::return_value_policy::reference)
+             py::arg("assignment_id"), py::rv_policy::reference)
         .def("lookupDisplacement",     &rdl2::Layer::lookupDisplacement,
-             py::arg("assignment_id"), py::return_value_policy::reference)
+             py::arg("assignment_id"), py::rv_policy::reference)
         .def("lookupVolumeShader",     &rdl2::Layer::lookupVolumeShader,
-             py::arg("assignment_id"), py::return_value_policy::reference)
+             py::arg("assignment_id"), py::rv_policy::reference)
         .def("lookupLightFilterSet",   &rdl2::Layer::lookupLightFilterSet,
-             py::arg("assignment_id"), py::return_value_policy::reference)
+             py::arg("assignment_id"), py::rv_policy::reference)
         .def("lookupShadowSet",        &rdl2::Layer::lookupShadowSet,
-             py::arg("assignment_id"), py::return_value_policy::reference)
+             py::arg("assignment_id"), py::rv_policy::reference)
         .def("lookupShadowReceiverSet",&rdl2::Layer::lookupShadowReceiverSet,
-             py::arg("assignment_id"), py::return_value_policy::reference)
+             py::arg("assignment_id"), py::rv_policy::reference)
         .def("clear", [](rdl2::Layer& self) {
             rdl2::SceneObject::UpdateGuard guard(&self);
             self.clear();
         })
         .def("lightSetsChanged", &rdl2::Layer::lightSetsChanged);
 }
+
+#undef DEF_DOWNCAST_CTOR

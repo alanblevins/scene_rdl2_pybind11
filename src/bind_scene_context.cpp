@@ -23,10 +23,16 @@ static std::vector<const rdl2::SceneClass*> getAllSceneClasses(const rdl2::Scene
 
 void bind_scene_context(py::module_& m)
 {
-    // py::nodelete prevents pybind11 from calling ~SceneContext(), which aborts
-    // outside the full MoonRay pipeline. Memory is reclaimed by the OS on exit.
-    py::class_<rdl2::SceneContext, std::unique_ptr<rdl2::SceneContext, py::nodelete>>(m, "SceneContext")
-        .def(py::init<>())
+    // py::inst_reference prevents nanobind from calling ~SceneContext() or
+    // freeing the memory, matching pybind11's py::nodelete behaviour.
+    // ~SceneContext() aborts outside the full MoonRay pipeline; memory is
+    // reclaimed by the OS on exit.
+    py::class_<rdl2::SceneContext>(m, "SceneContext")
+        .def_static("__new__", [](py::handle type) -> py::object {
+            auto* ctx = new rdl2::SceneContext();
+            return py::inst_reference(type, ctx);
+        }, py::arg("type"))
+        .def("__init__", [](py::object) {})
         // DSO path
         .def("getDsoPath",  &rdl2::SceneContext::getDsoPath)
         .def("setDsoPath",  &rdl2::SceneContext::setDsoPath)
@@ -37,49 +43,49 @@ void bind_scene_context(py::module_& m)
         .def("getSceneVariables",
              (const rdl2::SceneVariables& (rdl2::SceneContext::*)() const)
              &rdl2::SceneContext::getSceneVariables,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getSceneVariables",
              (rdl2::SceneVariables& (rdl2::SceneContext::*)())
              &rdl2::SceneContext::getSceneVariables,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         // Scene classes
         .def("getSceneClass",
              (const rdl2::SceneClass* (rdl2::SceneContext::*)(const std::string&) const)
              &rdl2::SceneContext::getSceneClass,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("sceneClassExists",  &rdl2::SceneContext::sceneClassExists)
         .def("createSceneClass",  &rdl2::SceneContext::createSceneClass,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getAllSceneClasses", &getAllSceneClasses,
-             py::return_value_policy::reference,
+             py::rv_policy::reference,
              "Returns a list of all SceneClass objects in the context.")
         // Scene objects
         .def("getSceneObject",
              (const rdl2::SceneObject* (rdl2::SceneContext::*)(const std::string&) const)
              &rdl2::SceneContext::getSceneObject,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getSceneObject",
              (rdl2::SceneObject* (rdl2::SceneContext::*)(const std::string&))
              &rdl2::SceneContext::getSceneObject,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("sceneObjectExists", &rdl2::SceneContext::sceneObjectExists)
         .def("createSceneObject", &rdl2::SceneContext::createSceneObject,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getAllSceneObjects", &getAllSceneObjects,
-             py::return_value_policy::reference,
+             py::rv_policy::reference,
              "Returns a list of all SceneObject instances in the context.")
         // Cameras
         .def("getPrimaryCamera", &rdl2::SceneContext::getPrimaryCamera,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getCameras",       &rdl2::SceneContext::getCameras,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getActiveCameras", &rdl2::SceneContext::getActiveCameras,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getDicingCamera",  &rdl2::SceneContext::getDicingCamera,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         // Transforms
         .def("getRender2World", &rdl2::SceneContext::getRender2World,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("setRender2World", &rdl2::SceneContext::setRender2World)
         // Checkpoint / resume
         .def("getCheckpointActive",  &rdl2::SceneContext::getCheckpointActive)

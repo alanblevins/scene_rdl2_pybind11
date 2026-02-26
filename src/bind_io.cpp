@@ -40,8 +40,8 @@ void bind_io(py::module_& m)
         .def("fromFile", &rdl2::BinaryReader::fromFile,
              py::arg("filename"))
         .def("fromBytes", [](rdl2::BinaryReader& self, py::bytes manifest, py::bytes payload) {
-                std::string mstr = manifest;
-                std::string pstr = payload;
+                std::string mstr(manifest.c_str(), manifest.size());
+                std::string pstr(payload.c_str(), payload.size());
                 self.fromBytes(mstr, pstr);
              },
              py::arg("manifest"), py::arg("payload"),
@@ -49,7 +49,7 @@ void bind_io(py::module_& m)
         .def("setWarningsAsErrors", &rdl2::BinaryReader::setWarningsAsErrors,
              py::arg("warnings_as_errors"))
         .def_static("showManifest", [](py::bytes manifest) {
-                std::string mstr = manifest;
+                std::string mstr(manifest.c_str(), manifest.size());
                 return rdl2::BinaryReader::showManifest(mstr);
              },
              py::arg("manifest"),
@@ -74,7 +74,9 @@ void bind_io(py::module_& m)
         .def("toBytes", [](const rdl2::BinaryWriter& self) {
                 std::string manifest, payload;
                 self.toBytes(manifest, payload);
-                return py::make_tuple(py::bytes(manifest), py::bytes(payload));
+                return py::make_tuple(
+                    py::bytes(manifest.c_str(), manifest.size()),
+                    py::bytes(payload.c_str(), payload.size()));
              },
              "Write RDL binary and return (manifest, payload) as bytes objects.")
         .def("show", &rdl2::BinaryWriter::show,

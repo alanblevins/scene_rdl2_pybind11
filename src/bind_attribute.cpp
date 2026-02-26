@@ -28,7 +28,7 @@ void bind_attribute(py::module_& m)
     // -----------------------------------------------------------------------
     py::class_<rdl2::Attribute>(m, "Attribute")
         .def("getName",    &rdl2::Attribute::getName,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getAliases", &rdl2::Attribute::getAliases)
         .def("getType",    &rdl2::Attribute::getType)
         .def("getObjectType", &rdl2::Attribute::getObjectType)
@@ -68,25 +68,27 @@ void bind_attribute(py::module_& m)
     // -----------------------------------------------------------------------
     py::class_<rdl2::SceneClass>(m, "SceneClass")
         .def("getName", &rdl2::SceneClass::getName,
-             py::return_value_policy::reference)
-        .def("getDeclaredInterface", &rdl2::SceneClass::getDeclaredInterface)
+             py::rv_policy::reference)
+        .def("getDeclaredInterface", [](const rdl2::SceneClass& sc) {
+            return static_cast<int>(sc.getDeclaredInterface());
+        })
         .def("hasAttribute", &rdl2::SceneClass::hasAttribute)
         .def("getAttribute",
              (const rdl2::Attribute* (rdl2::SceneClass::*)(const std::string&) const)
              &rdl2::SceneClass::getAttribute,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getAttributeGroup", &rdl2::SceneClass::getAttributeGroup,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("getGroupNames",  &getGroupNames)
         .def("getAttributes",  &getAttributeList,
-             py::return_value_policy::reference,
+             py::rv_policy::reference,
              "Returns a list of all Attribute objects in this SceneClass.")
         .def("getSourcePath",  &rdl2::SceneClass::getSourcePath)
         .def("showAllAttributes", &rdl2::SceneClass::showAllAttributes)
         .def("getSceneContext",
              (const rdl2::SceneContext* (rdl2::SceneClass::*)() const)
              &rdl2::SceneClass::getSceneContext,
-             py::return_value_policy::reference)
+             py::rv_policy::reference)
         .def("__repr__", [](const rdl2::SceneClass& sc) {
             return "<SceneClass name='" + sc.getName() + "'>";
         });

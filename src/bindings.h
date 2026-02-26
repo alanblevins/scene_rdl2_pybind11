@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/operators.h>
-#include <pybind11/functional.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/map.h>
 
 // scene_rdl2 headers — order matters for forward declarations
 #include <scene_rdl2/scene/rdl2/Types.h>
@@ -49,54 +49,109 @@
 #include <scene_rdl2/scene/rdl2/Metadata.h>
 #include <scene_rdl2/scene/rdl2/TraceSet.h>
 
-// SceneObject and all its subclasses declare their copy constructors as
-// private and leave them undefined (the C++03 non-copyable idiom, without
-// = delete).  On some compilers/libc++ versions __is_constructible() returns
-// true for these types anyway (it doesn't check access), which causes
-// pybind11 to emit copy/move constructor wrappers that reference undefined
-// symbols.  Specialise pybind11::detail traits here so no such code is
-// generated in any translation unit that includes this header.
-namespace pybind11 { namespace detail {
-#define MARK_NON_COPYABLE(T) \
-    template <> struct is_copy_constructible<T> : std::false_type {}; \
-    template <> struct is_copy_assignable<T>     : std::false_type {}; \
-    template <> struct is_move_constructible<T>  : std::false_type {};
-MARK_NON_COPYABLE(scene_rdl2::rdl2::SceneObject)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::SceneVariables)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Node)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Camera)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Geometry)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Light)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Shader)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::RootShader)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Material)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Displacement)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::VolumeShader)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Map)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::NormalMap)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::GeometrySet)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::LightSet)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::LightFilter)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::LightFilterSet)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::ShadowSet)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::ShadowReceiverSet)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Layer)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::RenderOutput)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::DisplayFilter)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::EnvMap)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Joint)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::Metadata)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::TraceSet)
-MARK_NON_COPYABLE(scene_rdl2::rdl2::UserData)
-#undef MARK_NON_COPYABLE
-}} // namespace pybind11::detail
-
-namespace py  = pybind11;
+namespace py  = nanobind;
 namespace rdl2 = scene_rdl2::rdl2;
 
 // ---------------------------------------------------------------------------
+// std::is_move_constructible specialisations
+//
+// SceneObject has a user-declared (private, undefined) copy constructor which
+// suppresses the implicit move constructor.  Compiler-generated move ctors for
+// derived types (e.g. TraceSet::TraceSet(TraceSet&&)) therefore fall back to
+// SceneObject's copy ctor, whose symbol is not exported from libscene_rdl2.dylib.
+// Specialising std::is_move_constructible to false for all rdl2 types prevents
+// nanobind from emitting move handlers that would instantiate that chain.
+// (Technically a specialisation in namespace std for a user type is undefined
+// behaviour per the standard, but all major compilers accept it and it has the
+// desired effect here.)
+// ---------------------------------------------------------------------------
+#define NB_MARK_NON_MOVABLE(T)                                              \
+    namespace std {                                                          \
+        template <> struct is_move_constructible<T> : false_type {};        \
+    }
+
+NB_MARK_NON_MOVABLE(rdl2::SceneObject)
+NB_MARK_NON_MOVABLE(rdl2::SceneVariables)
+NB_MARK_NON_MOVABLE(rdl2::SceneContext)
+NB_MARK_NON_MOVABLE(rdl2::SceneClass)
+NB_MARK_NON_MOVABLE(rdl2::Attribute)
+NB_MARK_NON_MOVABLE(rdl2::Node)
+NB_MARK_NON_MOVABLE(rdl2::Camera)
+NB_MARK_NON_MOVABLE(rdl2::Geometry)
+NB_MARK_NON_MOVABLE(rdl2::EnvMap)
+NB_MARK_NON_MOVABLE(rdl2::Joint)
+NB_MARK_NON_MOVABLE(rdl2::Light)
+NB_MARK_NON_MOVABLE(rdl2::Shader)
+NB_MARK_NON_MOVABLE(rdl2::RootShader)
+NB_MARK_NON_MOVABLE(rdl2::Material)
+NB_MARK_NON_MOVABLE(rdl2::Displacement)
+NB_MARK_NON_MOVABLE(rdl2::VolumeShader)
+NB_MARK_NON_MOVABLE(rdl2::Map)
+NB_MARK_NON_MOVABLE(rdl2::NormalMap)
+NB_MARK_NON_MOVABLE(rdl2::GeometrySet)
+NB_MARK_NON_MOVABLE(rdl2::LightSet)
+NB_MARK_NON_MOVABLE(rdl2::LightFilter)
+NB_MARK_NON_MOVABLE(rdl2::LightFilterSet)
+NB_MARK_NON_MOVABLE(rdl2::ShadowSet)
+NB_MARK_NON_MOVABLE(rdl2::ShadowReceiverSet)
+NB_MARK_NON_MOVABLE(rdl2::DisplayFilter)
+NB_MARK_NON_MOVABLE(rdl2::Metadata)
+NB_MARK_NON_MOVABLE(rdl2::TraceSet)
+NB_MARK_NON_MOVABLE(rdl2::UserData)
+NB_MARK_NON_MOVABLE(rdl2::Layer)
+NB_MARK_NON_MOVABLE(rdl2::RenderOutput)
+
+#undef NB_MARK_NON_MOVABLE
+
+// ---------------------------------------------------------------------------
+// nanobind::detail::is_copy_constructible specialisations
+//
+// These types have copy constructors in the C++ class definitions but the
+// symbols are not exported from libscene_rdl2.  Specialising nanobind's
+// trait (analogous to pybind11's MARK_NON_COPYABLE) prevents nanobind from
+// generating a copy handler that would reference the unexported symbol.
+// ---------------------------------------------------------------------------
+#define NB_MARK_NON_COPYABLE(T)                                         \
+    namespace nanobind { namespace detail {                             \
+        template <> struct is_copy_constructible<T> : std::false_type {}; \
+    }}
+
+NB_MARK_NON_COPYABLE(rdl2::SceneObject)
+NB_MARK_NON_COPYABLE(rdl2::SceneVariables)
+NB_MARK_NON_COPYABLE(rdl2::SceneContext)
+NB_MARK_NON_COPYABLE(rdl2::SceneClass)
+NB_MARK_NON_COPYABLE(rdl2::Attribute)
+NB_MARK_NON_COPYABLE(rdl2::Node)
+NB_MARK_NON_COPYABLE(rdl2::Camera)
+NB_MARK_NON_COPYABLE(rdl2::Geometry)
+NB_MARK_NON_COPYABLE(rdl2::EnvMap)
+NB_MARK_NON_COPYABLE(rdl2::Joint)
+NB_MARK_NON_COPYABLE(rdl2::Light)
+NB_MARK_NON_COPYABLE(rdl2::Shader)
+NB_MARK_NON_COPYABLE(rdl2::RootShader)
+NB_MARK_NON_COPYABLE(rdl2::Material)
+NB_MARK_NON_COPYABLE(rdl2::Displacement)
+NB_MARK_NON_COPYABLE(rdl2::VolumeShader)
+NB_MARK_NON_COPYABLE(rdl2::Map)
+NB_MARK_NON_COPYABLE(rdl2::NormalMap)
+NB_MARK_NON_COPYABLE(rdl2::GeometrySet)
+NB_MARK_NON_COPYABLE(rdl2::LightSet)
+NB_MARK_NON_COPYABLE(rdl2::LightFilter)
+NB_MARK_NON_COPYABLE(rdl2::LightFilterSet)
+NB_MARK_NON_COPYABLE(rdl2::ShadowSet)
+NB_MARK_NON_COPYABLE(rdl2::ShadowReceiverSet)
+NB_MARK_NON_COPYABLE(rdl2::DisplayFilter)
+NB_MARK_NON_COPYABLE(rdl2::Metadata)
+NB_MARK_NON_COPYABLE(rdl2::TraceSet)
+NB_MARK_NON_COPYABLE(rdl2::UserData)
+NB_MARK_NON_COPYABLE(rdl2::Layer)
+NB_MARK_NON_COPYABLE(rdl2::RenderOutput)
+
+#undef NB_MARK_NON_COPYABLE
+
+// ---------------------------------------------------------------------------
 // Per-class binding functions — implemented in bind_*.cpp, called from
-// PYBIND11_MODULE in module.cpp.  Must be called in the order listed so that
+// NB_MODULE in module.cpp.  Must be called in the order listed so that
 // base classes are registered before their derived classes.
 // ---------------------------------------------------------------------------
 void bind_math(py::module_& m);

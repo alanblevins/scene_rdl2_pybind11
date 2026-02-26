@@ -50,7 +50,7 @@ void bind_types(py::module_& m)
         .value("TYPE_SCENE_OBJECT_INDEXABLE", rdl2::TYPE_SCENE_OBJECT_INDEXABLE)
         .export_values();
 
-    py::enum_<rdl2::AttributeFlags>(m, "AttributeFlags", py::arithmetic())
+    py::enum_<rdl2::AttributeFlags>(m, "AttributeFlags", py::is_arithmetic{})
         .value("FLAGS_NONE",                rdl2::FLAGS_NONE)
         .value("FLAGS_BINDABLE",            rdl2::FLAGS_BINDABLE)
         .value("FLAGS_BLURRABLE",           rdl2::FLAGS_BLURRABLE)
@@ -63,9 +63,11 @@ void bind_types(py::module_& m)
         .value("TIMESTEP_BEGIN", rdl2::TIMESTEP_BEGIN)
         .value("TIMESTEP_END",   rdl2::TIMESTEP_END)
         .value("NUM_TIMESTEPS",  rdl2::NUM_TIMESTEPS)
-        .export_values();
+        .export_values()
+        .def("__int__",   [](rdl2::AttributeTimestep e){ return static_cast<int>(e); })
+        .def("__index__", [](rdl2::AttributeTimestep e){ return static_cast<int>(e); });
 
-    py::enum_<rdl2::SceneObjectInterface>(m, "SceneObjectInterface", py::arithmetic())
+    py::enum_<rdl2::SceneObjectInterface>(m, "SceneObjectInterface", py::is_arithmetic{})
         .value("INTERFACE_GENERIC",           rdl2::INTERFACE_GENERIC)
         .value("INTERFACE_GEOMETRYSET",       rdl2::INTERFACE_GEOMETRYSET)
         .value("INTERFACE_LAYER",             rdl2::INTERFACE_LAYER)
